@@ -25,10 +25,14 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 
 type envConfig struct {
-	Port     string         `env:"PORT,default=8080"`
-	Host     string         `env:"HOST,default=0.0.0.0"`
-	DbCfg    utils.DbConfig `env:",prefix="`
-	WithSeed bool           `env:"WITH_SEED,default=false"`
+	// Server configuration
+	Port string `env:"PORT,default=8080"`
+	Host string `env:"HOST,default=0.0.0.0"`
+
+	// Database configuration
+	DbCfg     utils.DbConfig `env:",prefix="`
+	DbMigrate bool           `env:"DB_MIGRATE,default=true"`
+	DbSeed    bool           `env:"DB_SEED,default=false"`
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -56,12 +60,15 @@ func main() {
 		panic(err)
 	}
 
-	if err := migrations.Apply(ctx, db); err != nil {
-		panic(err)
+	if cfg.DbMigrate {
+		if err := migrations.Apply(db); err != nil {
+			panic(err)
+		}
+		fmt.Println("Database migration completed successfully!")
 	}
 
-	// Seed the database if WITH_SEED is true
-	if cfg.WithSeed {
+	// Seed the database if DB_SEED is true
+	if cfg.DbSeed {
 		fmt.Println("Seeding database with dummy data...")
 		if err := seed.SeedData(ctx, db); err != nil {
 			panic(fmt.Errorf("failed to seed database: %w", err))

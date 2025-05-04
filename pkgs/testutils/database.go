@@ -130,7 +130,7 @@ func NewDatabase() (*DockerTestDatabaseInstance, error) {
 			return fmt.Errorf("failed to get sql db: %w", err)
 		}
 
-		if err := migrations.Apply(ctx, gormDB); err != nil {
+		if err := migrations.Apply(gormDB); err != nil {
 			return fmt.Errorf("failed to create migrate driver: %w", err)
 		}
 

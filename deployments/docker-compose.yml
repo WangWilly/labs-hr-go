@@ -14,7 +14,7 @@ services:
       DB_USER: labs-hr-go
       DB_PASSWORD: labs-hr-go
       DB_DATABASE: labs-hr-go
-      WITH_SEED: false
+      DB_SEED: false
     depends_on:
       - db
       - redis

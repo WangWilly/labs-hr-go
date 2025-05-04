@@ -37,7 +37,7 @@ func main() {
 	////////////////////////////////////////////////////////////////////////////
 	// run migrations
 
-	if err := migrations.Apply(ctx, db); err != nil {
+	if err := migrations.Apply(db); err != nil {
 		panic(err)
 	}
 }

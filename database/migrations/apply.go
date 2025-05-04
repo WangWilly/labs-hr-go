@@ -1,19 +1,27 @@
 package migrations
 
 import (
-	"context"
-
-	"github.com/WangWilly/labs-hr-go/pkgs/utils"
+	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
 )
 
-func Apply(ctx context.Context, db *gorm.DB) error {
-	ctx = context.WithValue(ctx, utils.DBContextKey, db)
+var migrationList = []*gormigrate.Migration{
+	{
+		ID: "00001",
+		Migrate: func(tx *gorm.DB) error {
+			return Up00001Init(tx)
+		},
+		Rollback: func(tx *gorm.DB) error {
+			return Down00001Init(tx)
+		},
+	},
+}
 
-	if err := Up00001Init(ctx); err != nil {
+func Apply(db *gorm.DB) error {
+	m := gormigrate.New(db, gormigrate.DefaultOptions, migrationList)
+	if err := m.Migrate(); err != nil {
 		return err
 	}
-	// Down00001Init(ctx)
 
 	return nil
 }

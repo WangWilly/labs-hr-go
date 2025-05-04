@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -87,13 +86,5 @@ func GetDB(cfg DbConfig) (*gorm.DB, error) {
 
 	////////////////////////////////////////////////////////////////////////////
 
-	return db, nil
-}
-
-func GetCtxDb(ctx context.Context) (*gorm.DB, error) {
-	db, ok := ctx.Value(DBContextKey).(*gorm.DB)
-	if !ok {
-		return nil, fmt.Errorf("failed to get database from context")
-	}
 	return db, nil
 }

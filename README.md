@@ -128,6 +128,7 @@ If you encounter issues with migrations:
 
 ### References
 
+- [Gormigrate Documentation](https://github.com/go-gormigrate/gormigrate)
 - [Goose Documentation](https://github.com/pressly/goose)
 - [GORM Migrations](https://gorm.io/docs/migration.html)
 - [Stack Overflow: GORM Migration with golang-migrate](https://stackoverflow.com/questions/64510093/gorm-migration-using-golang-migrate-migrate)
@@ -415,14 +416,14 @@ Error Responses:
 ### Application Features
 | Name | Description | Default |
 |------|-------------|---------|
-| WITH_SEED | Whether to seed the database with sample data | `false` |
+| DB_SEED | Whether to seed the database with sample data | `false` |
 
 ### Usage Examples
 
 #### Local Development
 ```bash
 # Run with database seeding enabled
-WITH_SEED=true go run cmd/main.go
+DB_SEED=true go run cmd/main.go
 
 # Custom database connection
 DB_HOST=localhost DB_PORT=3306 DB_USER=myuser DB_PASSWORD=mypass DB_DATABASE=mydb go run cmd/main.go
