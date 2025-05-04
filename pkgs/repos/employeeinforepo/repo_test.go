@@ -29,7 +29,7 @@ func TestRepo_CRUD(t *testing.T) {
 		faker := gofakeit.New(0)
 
 		// Prepare test data
-		employeeInfo := models.DummyMessageSection(faker)
+		employeeInfo := models.DummyEmployeeInfo(faker)
 
 		testutils.MustClearTable(t, db, models.EmployeeInfo{})
 

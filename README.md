@@ -62,31 +62,93 @@ When running with Docker Compose, you can configure the following environment va
 
 ### Prerequisites
 
-- https://github.com/pressly/goose?tab=readme-ov-file#install
+- Docker and Docker Compose for local database setup
 
-Use the docker compose file to run setup the database:
+### Local Database Setup
+
+Set up the local database environment using the provided script:
+
 ```bash
 ./scripts/local_setup.sh
 ```
 
-### Development
+This script will:
+1. Navigate to the deployment directory
+2. Verify Docker is running
+3. Check if Docker Compose is installed
+4. Start the required database containers
 
-1. Create a new migration ([example](./database/migrations/00001_init.go))
+### Creating Migrations
 
-2. Edit the migration file to define the `Up` and `Down` functions. The `Up` function should contain the SQL statements to apply the migration, while the `Down` function should contain the SQL statements to revert it.
+1. Create a new migration file in the `database/migrations` directory following the naming convention `NNNNN_description.go`, where `NNNNN` is a sequential number.
 
-3. Run the migration using the following command:
-   ```bash
-   go run database/cmd/main.go
+   Example structure ([see example](./database/migrations/00001_init.go)):
+   ```go
+   package migrations
+
+   import (
+       "context"
+
+       "github.com/WangWilly/labs-hr-go/pkgs/models"
+       "github.com/WangWilly/labs-hr-go/pkgs/utils"
+   )
+
+   // UpNNNNNDescription runs the "up" migration
+   func UpNNNNNDescription(ctx context.Context) error {
+       // Migration logic to apply changes
+       return nil
+   }
+
+   // DownNNNNNDescription runs the "down" migration
+   func DownNNNNNDescription(ctx context.Context) error {
+       // Migration logic to revert changes
+       return nil
+   }
    ```
 
-### Reference
+2. In the `Up` function, implement the changes you want to apply to the database (create tables, add columns, etc.).
 
-- https://stackoverflow.com/questions/64510093/gorm-migration-using-golang-migrate-migrate
+3. In the `Down` function, implement the logic to revert those changes (drop tables, remove columns, etc.).
 
-## API Documentation (TBD)
+### Running Migrations
 
-### Employee
+Execute migrations using the migration command:
+
+```bash
+go run database/cmd/main.go
+```
+
+### Migration Best Practices
+
+1. Always create both `Up` and `Down` functions for each migration
+2. Test migrations in development before applying to production
+3. Keep migrations idempotent when possible
+4. Use transactions for complex migrations to ensure atomicity
+
+### Troubleshooting
+
+If you encounter issues with migrations:
+
+1. Check the database connection settings
+2. Verify that the migration files are properly formatted
+3. Look for error messages in the application logs
+4. Reset the database if needed during development
+
+### References
+
+- [Goose Documentation](https://github.com/pressly/goose)
+- [GORM Migrations](https://gorm.io/docs/migration.html)
+- [Stack Overflow: GORM Migration with golang-migrate](https://stackoverflow.com/questions/64510093/gorm-migration-using-golang-migrate-migrate)
+
+## API Documentation
+
+The HR management system provides RESTful APIs for managing employees and attendance records. All requests and responses use JSON format.
+
+### Employee Endpoints
+
+#### Create Employee
+
+Creates a new employee record with their position information.
 
 ```bash
 curl --location 'http://localhost:8080/employee' \
@@ -104,6 +166,7 @@ curl --location 'http://localhost:8080/employee' \
 }'
 ```
 
+Response (200 OK):
 ```json
 {
    "employee_id": 1,
@@ -111,10 +174,30 @@ curl --location 'http://localhost:8080/employee' \
 }
 ```
 
+Request Parameters:
+- `name` (string, required): Employee's full name
+- `age` (integer, required): Employee's age
+- `address` (string, required): Employee's address
+- `phone` (string, required): Contact phone number
+- `email` (string, required): Contact email address
+- `position` (string, required): Job position title
+- `department` (string, required): Department name
+- `salary` (number, required): Monthly salary amount
+- `start_date` (unix timestamp, required): Employment start date
+
+Error Responses:
+- 400 Bad Request: Invalid request format or missing required fields
+- 500 Internal Server Error: Server-side processing error
+
+#### Get Employee
+
+Retrieves detailed information about an employee by ID.
+
 ```bash
 curl --location 'http://localhost:8080/employee/1'
 ```
 
+Response (200 OK):
 ```json
 {
    "employee_id": 1,
@@ -133,6 +216,14 @@ curl --location 'http://localhost:8080/employee/1'
 }
 ```
 
+Error Responses:
+- 400 Bad Request: Invalid ID format
+- 404 Not Found: Employee not found
+
+#### Update Employee
+
+Updates an existing employee's information. All fields are optional - only include fields you want to update.
+
 ```bash
 curl --location --request PUT 'http://localhost:8080/employee/1' \
 --header 'Content-Type: application/json' \
@@ -141,6 +232,7 @@ curl --location --request PUT 'http://localhost:8080/employee/1' \
 }'
 ```
 
+Response (200 OK):
 ```json
 {
    "id": 1,
@@ -150,6 +242,23 @@ curl --location --request PUT 'http://localhost:8080/employee/1' \
    "phone": "654321232",
    "email": "test@goooo.co"
 }
+```
+
+Request Parameters:
+- `name` (string, optional): Updated employee name
+- `age` (integer, optional): Updated employee age
+- `address` (string, optional): Updated address
+- `phone` (string, optional): Updated phone number
+- `email` (string, optional): Updated email address
+
+Error Responses:
+- 400 Bad Request: Invalid ID format or request body
+- 404 Not Found: Employee not found
+- 500 Internal Server Error: Update operation failed
+
+#### Promote Employee
+
+Updates an employee's position, department, or salary information.
 
 ```bash
 curl --location 'http://localhost:8080/promote/1' \
@@ -162,6 +271,7 @@ curl --location 'http://localhost:8080/promote/1' \
 }'
 ```
 
+Response (200 OK):
 ```json
 {
    "position_id": 5,
@@ -169,7 +279,22 @@ curl --location 'http://localhost:8080/promote/1' \
 }
 ```
 
-### Attendance
+Request Parameters:
+- `position` (string, required): New position title
+- `department` (string, required): New department name
+- `salary` (number, required): New salary amount
+- `start_date` (unix timestamp, required): When the promotion takes effect
+
+Error Responses:
+- 400 Bad Request: Invalid request format or missing required fields
+- 404 Not Found: Employee not found
+- 500 Internal Server Error: Promotion operation failed
+
+### Attendance Endpoints
+
+#### Clock In
+
+Records an attendance entry when an employee starts work.
 
 ```bash
 curl --location 'http://localhost:8080/attendance' \
@@ -179,6 +304,7 @@ curl --location 'http://localhost:8080/attendance' \
 }'
 ```
 
+Response (200 OK):
 ```json
 {
    "attendance_id": 1,
@@ -188,10 +314,23 @@ curl --location 'http://localhost:8080/attendance' \
 }
 ```
 
+Request Parameters:
+- `employee_id` (integer, required): ID of the employee clocking in
+
+Error Responses:
+- 400 Bad Request: Invalid employee ID or already clocked in
+- 404 Not Found: Employee not found
+- 500 Internal Server Error: Clock-in operation failed
+
+#### Get Attendance Record
+
+Retrieves an attendance record by ID.
+
 ```bash
 curl --location 'http://localhost:8080/attendance/1'
 ```
 
+Response (200 OK):
 ```json
 {
     "attendance_id": 1,
@@ -201,6 +340,68 @@ curl --location 'http://localhost:8080/attendance/1'
 }
 ```
 
+Error Responses:
+- 400 Bad Request: Invalid ID format
+- 404 Not Found: Attendance record not found
+
+#### Clock Out
+
+Records when an employee ends their workday.
+
+```bash
+curl --location --request PUT 'http://localhost:8080/attendance/1' \
+--header 'Content-Type: application/json'
+```
+
+Response (200 OK):
+```json
+{
+    "attendance_id": 1,
+    "position_id": 3,
+    "clock_in_time": "2025-05-04 13:41:15",
+    "clock_out_time": "2025-05-04 17:30:22"
+}
+```
+
+Error Responses:
+- 400 Bad Request: Invalid ID format or already clocked out
+- 404 Not Found: Attendance record not found
+- 500 Internal Server Error: Clock-out operation failed
+
+#### Get Employee Attendance History
+
+Retrieves attendance history for a specific employee.
+
+```bash
+curl --location 'http://localhost:8080/employee/1/attendance'
+```
+
+Response (200 OK):
+```json
+{
+    "employee_id": 1,
+    "records": [
+        {
+            "attendance_id": 1,
+            "position_id": 3,
+            "clock_in_time": "2025-05-04 13:41:15",
+            "clock_out_time": "2025-05-04 17:30:22",
+            "total_hours": 3.82
+        },
+        {
+            "attendance_id": 2,
+            "position_id": 3,
+            "clock_in_time": "2025-05-05 09:02:10",
+            "clock_out_time": "2025-05-05 18:15:42",
+            "total_hours": 9.23
+        }
+    ]
+}
+```
+
+Error Responses:
+- 400 Bad Request: Invalid employee ID format
+- 404 Not Found: Employee not found
 
 ## All Environment Variables
 

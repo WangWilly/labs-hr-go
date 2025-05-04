@@ -9,7 +9,7 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 
 type EmployeeAttendance struct {
-	ID         int64 `gorm:"primaryKey"`
+	ID         int64 `gorm:"primaryKey" fake:"-"`
 	EmployeeID int64 `gorm:"index" fake:"{number:1,100}"`
 
 	PositionID int64     `gorm:"index" fake:"{number:1,100}"`

@@ -15,6 +15,7 @@ import (
 	"github.com/WangWilly/labs-gin/pkgs/repos/employeeattendancerepo"
 	"github.com/WangWilly/labs-gin/pkgs/repos/employeeinforepo"
 	"github.com/WangWilly/labs-gin/pkgs/repos/employeepositionrepo"
+	"github.com/WangWilly/labs-gin/pkgs/seed"
 	"github.com/WangWilly/labs-gin/pkgs/timemodule"
 	"github.com/WangWilly/labs-gin/pkgs/utils"
 
@@ -24,9 +25,10 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 
 type envConfig struct {
-	Port  string         `env:"PORT,default=8080"`
-	Host  string         `env:"HOST,default=0.0.0.0"`
-	DbCfg utils.DbConfig `env:",prefix="`
+	Port     string         `env:"PORT,default=8080"`
+	Host     string         `env:"HOST,default=0.0.0.0"`
+	DbCfg    utils.DbConfig `env:",prefix="`
+	WithSeed bool           `env:"WITH_SEED,default=false"`
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,9 +56,17 @@ func main() {
 		panic(err)
 	}
 
-	// TODO:
 	if err := migrations.Apply(ctx, db); err != nil {
 		panic(err)
+	}
+
+	// Seed the database if WITH_SEED is true
+	if cfg.WithSeed {
+		fmt.Println("Seeding database with dummy data...")
+		if err := seed.SeedData(ctx, db); err != nil {
+			panic(fmt.Errorf("failed to seed database: %w", err))
+		}
+		fmt.Println("Database seeded successfully!")
 	}
 
 	////////////////////////////////////////////////////////////////////////////

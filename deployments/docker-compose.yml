@@ -4,7 +4,7 @@ services:
     image: labs-hr-go-app:latest
     restart: always
     ports:
-      - "8081:8080"
+      - "8080:8080"
     volumes:
       - './public/downloads:/app/public/downloads'
     environment:
@@ -14,6 +14,7 @@ services:
       DB_USER: labs-hr-go
       DB_PASSWORD: labs-hr-go
       DB_DATABASE: labs-hr-go
+      WITH_SEED: false
     depends_on:
       - db
       - redis
