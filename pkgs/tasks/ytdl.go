@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/WangWilly/labs-gin/pkgs/cmd"
-	"github.com/WangWilly/labs-gin/pkgs/uuid"
+	"github.com/WangWilly/labs-hr-go/pkgs/cmd"
+	"github.com/WangWilly/labs-hr-go/pkgs/uuid"
 )
 
 ////////////////////////////////////////////////////////////////////////////////

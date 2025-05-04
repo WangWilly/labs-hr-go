@@ -3,7 +3,7 @@ package employee
 import (
 	"strconv"
 
-	"github.com/WangWilly/labs-gin/pkgs/utils"
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
 )
 

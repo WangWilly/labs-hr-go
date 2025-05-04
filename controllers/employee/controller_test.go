@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/WangWilly/labs-gin/pkgs/testutils"
+	"github.com/WangWilly/labs-hr-go/pkgs/testutils"
 	"github.com/brianvoe/gofakeit/v6"
 	gomock "go.uber.org/mock/gomock"
 	"gorm.io/driver/mysql"

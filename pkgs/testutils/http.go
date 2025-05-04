@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/WangWilly/labs-gin/pkgs/utils"
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
 	. "github.com/smartystreets/goconvey/convey"
 )

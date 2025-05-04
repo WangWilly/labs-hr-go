@@ -10,8 +10,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/WangWilly/labs-gin/database/migrations"
-	"github.com/WangWilly/labs-gin/pkgs/utils"
+	"github.com/WangWilly/labs-hr-go/database/migrations"
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
 	"github.com/sethvargo/go-envconfig"

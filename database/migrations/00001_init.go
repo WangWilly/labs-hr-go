@@ -3,8 +3,8 @@ package migrations
 import (
 	"context"
 
-	"github.com/WangWilly/labs-gin/pkgs/models"
-	"github.com/WangWilly/labs-gin/pkgs/utils"
+	"github.com/WangWilly/labs-hr-go/pkgs/models"
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 )
 
 func Up00001Init(ctx context.Context) error {

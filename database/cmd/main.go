@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 
-	"github.com/WangWilly/labs-gin/pkgs/utils"
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/sethvargo/go-envconfig"
 
-	"github.com/WangWilly/labs-gin/database/migrations"
+	"github.com/WangWilly/labs-hr-go/database/migrations"
 )
 
 ////////////////////////////////////////////////////////////////////////////////

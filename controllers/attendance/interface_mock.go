@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 	time "time"
 
-	models "github.com/WangWilly/labs-gin/pkgs/models"
+	models "github.com/WangWilly/labs-hr-go/pkgs/models"
 	gomock "go.uber.org/mock/gomock"
 	gorm "gorm.io/gorm"
 )

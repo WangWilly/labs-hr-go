@@ -3,7 +3,7 @@ package migrations
 import (
 	"context"
 
-	"github.com/WangWilly/labs-gin/pkgs/utils"
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"gorm.io/gorm"
 )
 

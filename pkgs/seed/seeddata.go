@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/WangWilly/labs-gin/pkgs/models"
-	"github.com/WangWilly/labs-gin/pkgs/repos/employeeattendancerepo"
-	"github.com/WangWilly/labs-gin/pkgs/repos/employeeinforepo"
-	"github.com/WangWilly/labs-gin/pkgs/repos/employeepositionrepo"
+	"github.com/WangWilly/labs-hr-go/pkgs/models"
+	"github.com/WangWilly/labs-hr-go/pkgs/repos/employeeattendancerepo"
+	"github.com/WangWilly/labs-hr-go/pkgs/repos/employeeinforepo"
+	"github.com/WangWilly/labs-hr-go/pkgs/repos/employeepositionrepo"
 	"github.com/brianvoe/gofakeit/v6"
 	"gorm.io/gorm"
 )

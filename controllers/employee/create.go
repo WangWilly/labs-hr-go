@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/WangWilly/labs-gin/pkgs/models"
+	"github.com/WangWilly/labs-hr-go/pkgs/models"
 	"github.com/gin-gonic/gin"
 )
 

@@ -1,4 +1,4 @@
-module github.com/WangWilly/labs-gin
+module github.com/WangWilly/labs-hr-go
 
 go 1.24
 

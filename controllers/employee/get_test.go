@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/WangWilly/labs-gin/pkgs/models"
-	"github.com/WangWilly/labs-gin/pkgs/utils"
+	"github.com/WangWilly/labs-hr-go/pkgs/models"
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.uber.org/mock/gomock"
 )

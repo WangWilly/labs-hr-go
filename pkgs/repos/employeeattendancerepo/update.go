@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/WangWilly/labs-gin/pkgs/models"
+	"github.com/WangWilly/labs-hr-go/pkgs/models"
 	"gorm.io/gorm"
 )
 

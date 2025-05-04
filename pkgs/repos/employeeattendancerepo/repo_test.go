@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/WangWilly/labs-gin/pkgs/models"
-	"github.com/WangWilly/labs-gin/pkgs/testutils"
+	"github.com/WangWilly/labs-hr-go/pkgs/models"
+	"github.com/WangWilly/labs-hr-go/pkgs/testutils"
 	"github.com/brianvoe/gofakeit/v6"
 
 	. "github.com/smartystreets/goconvey/convey"

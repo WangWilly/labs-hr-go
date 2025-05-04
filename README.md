@@ -11,8 +11,8 @@
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/WangWilly/labs-gin.git
-   cd labs-gin
+   git clone https://github.com/WangWilly/labs-hr-go.git
+   cd labs-hr-go
    ```
 
 2. Install dependencies:
@@ -49,14 +49,6 @@
    ```bash
    docker compose logs -f
    ```
-
-### Docker Environment Variables
-
-When running with Docker Compose, you can configure the following environment variables in the `deployments/docker-compose.yml` file:
-
-| Name | Description | Default |
-|------|-------------|---------|
-| PORT | The port on which the service listens | `8080` |
 
 ## Migrations
 
@@ -405,10 +397,39 @@ Error Responses:
 
 ## All Environment Variables
 
+### Server Configuration
 | Name | Description | Default |
 |------|-------------|---------|
 | PORT | The port on which the service listens | `8080` |
 | HOST | The host address for the service | `0.0.0.0` |
+
+### Database Configuration
+| Name | Description | Default |
+|------|-------------|---------|
+| DB_HOST | Database server hostname | - |
+| DB_PORT | Database server port | `3306` |
+| DB_USER | Database username | - |
+| DB_PASSWORD | Database password | - |
+| DB_DATABASE | Database name | - |
+
+### Application Features
+| Name | Description | Default |
+|------|-------------|---------|
+| WITH_SEED | Whether to seed the database with sample data | `false` |
+
+### Usage Examples
+
+#### Local Development
+```bash
+# Run with database seeding enabled
+WITH_SEED=true go run cmd/main.go
+
+# Custom database connection
+DB_HOST=localhost DB_PORT=3306 DB_USER=myuser DB_PASSWORD=mypass DB_DATABASE=mydb go run cmd/main.go
+```
+
+#### Docker Environment
+When using Docker Compose, configure these variables in the `deployments/docker-compose.yml` file.
 
 ## Development Resources
 

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/WangWilly/labs-gin/pkgs/models"
+	"github.com/WangWilly/labs-hr-go/pkgs/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.uber.org/mock/gomock"
 )
