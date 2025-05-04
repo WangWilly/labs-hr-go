@@ -9,10 +9,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/WangWilly/labs-gin/controllers/dltask"
-	"github.com/WangWilly/labs-gin/pkgs/taskmanager"
+	"github.com/WangWilly/labs-gin/controllers/attendance"
+	"github.com/WangWilly/labs-gin/controllers/employee"
+	"github.com/WangWilly/labs-gin/database/migrations"
+	"github.com/WangWilly/labs-gin/pkgs/repos/employeeattendancerepo"
+	"github.com/WangWilly/labs-gin/pkgs/repos/employeeinforepo"
+	"github.com/WangWilly/labs-gin/pkgs/repos/employeepositionrepo"
+	"github.com/WangWilly/labs-gin/pkgs/timemodule"
 	"github.com/WangWilly/labs-gin/pkgs/utils"
-	"github.com/WangWilly/labs-gin/pkgs/uuid"
 
 	"github.com/sethvargo/go-envconfig"
 )
@@ -20,10 +24,9 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 
 type envConfig struct {
-	Port           string             `env:"PORT,default=8080"`
-	Host           string             `env:"HOST,default=0.0.0.0"`
-	TaskManagerCfg taskmanager.Config `nv:",prefix=TASK_MENAGER_"`
-	DlTaskCtrlCfg  dltask.Config      `env:",prefix=DL_TASK_CTRL_"`
+	Port  string         `env:"PORT,default=8080"`
+	Host  string         `env:"HOST,default=0.0.0.0"`
+	DbCfg utils.DbConfig `env:",prefix="`
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -39,24 +42,40 @@ func main() {
 	}
 
 	////////////////////////////////////////////////////////////////////////////
-
 	// Initialize Gin router
+
 	r := utils.GetDefaultRouter()
 
 	////////////////////////////////////////////////////////////////////////////
+	// Setup database
 
-	// Initialize task manager
-	taskManager := taskmanager.NewTaskPool(cfg.TaskManagerCfg)
-	taskManager.Run()
+	db, err := utils.GetDB(cfg.DbCfg)
+	if err != nil {
+		panic(err)
+	}
 
-	// UUid generator
-	uuidGen := uuid.NewGenerator()
+	// TODO:
+	if err := migrations.Apply(ctx, db); err != nil {
+		panic(err)
+	}
 
 	////////////////////////////////////////////////////////////////////////////
 
-	// Initialize download task controller
-	dlTaskCtrl := dltask.NewController(cfg.DlTaskCtrlCfg, taskManager, uuidGen)
-	dlTaskCtrl.RegisterRoutes(r)
+	timeModule := timemodule.New()
+	employeeInfoRepo := employeeinforepo.New()
+	employeePositionRepo := employeepositionrepo.New()
+	employeeAttendanceRepo := employeeattendancerepo.New()
+
+	////////////////////////////////////////////////////////////////////////////
+	// Initialize the controllers
+
+	employeeCtrlCfg := employee.Config{}
+	employeeCtrl := employee.NewController(employeeCtrlCfg, db, timeModule, employeeInfoRepo, employeePositionRepo)
+	employeeCtrl.RegisterRoutes(r)
+
+	attendanceCtrlCfg := attendance.Config{}
+	attendanceCtrl := attendance.NewController(attendanceCtrlCfg, db, timeModule, employeePositionRepo, employeeAttendanceRepo)
+	attendanceCtrl.RegisterRoutes(r)
 
 	////////////////////////////////////////////////////////////////////////////
 
@@ -89,9 +108,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Shutdown task manager
-	fmt.Println("Shutdown Task Manager ...")
-	taskManager.ShutdownNow()
+	// TODO:
 
 	// Gracefully shutdown the server
 	fmt.Println("Shutdown HTTP Server ...")
