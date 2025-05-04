@@ -1,0 +1,5 @@
+playground/
+dist/
+
+**/public/downloads/
+bin/
