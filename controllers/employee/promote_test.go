@@ -56,6 +56,11 @@ func TestPromote(t *testing.T) {
 						return nil
 					})
 
+					// Expect cache to be deleted after successful promotion
+				s.cacheManager.EXPECT().
+					DeleteEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil)
+
 				// Expected response
 				expectedResponse := PromoteResponse{
 					PositionID: newPosition.ID,
@@ -124,6 +129,8 @@ func TestPromote(t *testing.T) {
 				s.employeePositionRepo.EXPECT().
 					Create(gomock.Any(), s.db, gomock.Any(), nowTime).
 					Return(errors.New("database error"))
+
+					// Cache deletion should not be called when database operation fails
 
 				// Make the request and verify error response
 				var errorResponse map[string]string

@@ -1,6 +1,7 @@
 package employee
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
@@ -26,6 +27,8 @@ type GetResponse struct {
 	StartDate  string  `json:"start_date"`
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 func (c *Controller) Get(ctx *gin.Context) {
 	id, ok := ctx.Params.Get("id")
 	if !ok {
@@ -36,6 +39,19 @@ func (c *Controller) Get(ctx *gin.Context) {
 	employeeID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid id"})
+		return
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+
+	// Check if the employee detail is in cache
+	cacheData, err := c.cacheManager.GetEmployeeDetailV1(ctx, employeeID)
+	if err != nil {
+		fmt.Println("cache error:", err)
+	}
+	if err == nil && cacheData != nil {
+		fmt.Println("cache hit")
+		ctx.JSON(200, cacheData)
 		return
 	}
 

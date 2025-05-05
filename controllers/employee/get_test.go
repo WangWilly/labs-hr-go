@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/WangWilly/labs-hr-go/pkgs/dtos"
 	"github.com/WangWilly/labs-hr-go/pkgs/models"
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	. "github.com/smartystreets/goconvey/convey"
@@ -39,20 +40,26 @@ func TestGet(t *testing.T) {
 				StartDate:  nowTime.Add(-6 * 30 * 24 * time.Hour), // ~6 months ago
 			}
 
-			Convey("When retrieving the employee by ID", func() {
-				// Set up expectations
-				s.timeModule.EXPECT().Now().Return(nowTime)
+			// Expected response data structure
+			expectedResponse := GetResponse{
+				EmployeeID: employeeInfo.ID,
+				Name:       employeeInfo.Name,
+				Age:        employeeInfo.Age,
+				Phone:      employeeInfo.Phone,
+				Email:      employeeInfo.Email,
+				Address:    employeeInfo.Address,
+				CreatedAt:  utils.FormatedTime(employeeInfo.CreatedAt),
+				UpdatedAt:  utils.FormatedTime(employeeInfo.UpdatedAt),
+				PositionID: employeePosition.ID,
+				Position:   employeePosition.Position,
+				Department: employeePosition.Department,
+				Salary:     employeePosition.Salary,
+				StartDate:  utils.FormatedTime(employeePosition.StartDate),
+			}
 
-				s.employeeInfoRepo.EXPECT().
-					MustGet(gomock.Any(), s.db, employeeID).
-					Return(employeeInfo, nil)
-
-				s.employeePositionRepo.EXPECT().
-					GetCurrentByEmployeeID(gomock.Any(), s.db, employeeID, nowTime).
-					Return(employeePosition, nil)
-
-				// Expected response
-				expectedResponse := GetResponse{
+			Convey("When retrieving the employee by ID and cache hits", func() {
+				// Set up cache hit expectation
+				cachedResponse := &dtos.EmployeeV1Response{
 					EmployeeID: employeeInfo.ID,
 					Name:       employeeInfo.Name,
 					Age:        employeeInfo.Age,
@@ -68,6 +75,12 @@ func TestGet(t *testing.T) {
 					StartDate:  utils.FormatedTime(employeePosition.StartDate),
 				}
 
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(cachedResponse, nil)
+
+				// No repository calls expected when cache hits
+
 				// Make the request and verify response
 				var actualResponse GetResponse
 				s.testServer.MustDoAndMatchCode(
@@ -79,7 +92,51 @@ func TestGet(t *testing.T) {
 					http.StatusOK,
 				)
 
-				Convey("Then the response should contain correct employee information", func() {
+				Convey("Then the response should contain correct cached employee information", func() {
+					So(actualResponse.EmployeeID, ShouldEqual, expectedResponse.EmployeeID)
+					So(actualResponse.Name, ShouldEqual, expectedResponse.Name)
+					So(actualResponse.Age, ShouldEqual, expectedResponse.Age)
+					So(actualResponse.Phone, ShouldEqual, expectedResponse.Phone)
+					So(actualResponse.Email, ShouldEqual, expectedResponse.Email)
+					So(actualResponse.Address, ShouldEqual, expectedResponse.Address)
+					So(actualResponse.PositionID, ShouldEqual, expectedResponse.PositionID)
+					So(actualResponse.Position, ShouldEqual, expectedResponse.Position)
+					So(actualResponse.Department, ShouldEqual, expectedResponse.Department)
+					So(actualResponse.Salary, ShouldEqual, expectedResponse.Salary)
+					So(actualResponse.CreatedAt, ShouldEqual, expectedResponse.CreatedAt)
+					So(actualResponse.UpdatedAt, ShouldEqual, expectedResponse.UpdatedAt)
+					So(actualResponse.StartDate, ShouldEqual, expectedResponse.StartDate)
+				})
+			})
+
+			Convey("When retrieving the employee by ID and cache misses", func() {
+				// Set up cache miss expectation
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, errors.New("cache miss"))
+
+				s.timeModule.EXPECT().Now().Return(nowTime)
+
+				s.employeeInfoRepo.EXPECT().
+					MustGet(gomock.Any(), s.db, employeeID).
+					Return(employeeInfo, nil)
+
+				s.employeePositionRepo.EXPECT().
+					GetCurrentByEmployeeID(gomock.Any(), s.db, employeeID, nowTime).
+					Return(employeePosition, nil)
+
+				// Make the request and verify response
+				var actualResponse GetResponse
+				s.testServer.MustDoAndMatchCode(
+					t,
+					http.MethodGet,
+					"/employee/123",
+					nil,
+					&actualResponse,
+					http.StatusOK,
+				)
+
+				Convey("Then the response should contain correct employee information from database", func() {
 					So(actualResponse.EmployeeID, ShouldEqual, expectedResponse.EmployeeID)
 					So(actualResponse.Name, ShouldEqual, expectedResponse.Name)
 					So(actualResponse.Age, ShouldEqual, expectedResponse.Age)
@@ -97,6 +154,11 @@ func TestGet(t *testing.T) {
 			})
 
 			Convey("When employee info is not found", func() {
+				// Set up cache miss expectation
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, errors.New("cache miss"))
+
 				// Set up expectations for failure case
 				s.employeeInfoRepo.EXPECT().
 					MustGet(gomock.Any(), s.db, employeeID).
@@ -119,6 +181,11 @@ func TestGet(t *testing.T) {
 			})
 
 			Convey("When employee position is not found", func() {
+				// Set up cache miss expectation
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, errors.New("cache miss"))
+
 				// Set up expectations for partial failure
 				s.employeeInfoRepo.EXPECT().
 					MustGet(gomock.Any(), s.db, employeeID).

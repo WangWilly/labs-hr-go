@@ -1,6 +1,7 @@
 package employee
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -58,6 +59,10 @@ func (c *Controller) Promote(ctx *gin.Context) {
 	}
 
 	////////////////////////////////////////////////////////////////////////////
+
+	if err := c.cacheManager.DeleteEmployeeDetailV1(ctx, employeeID); err != nil {
+		fmt.Fprintln(ctx.Writer, "failed to delete cache:", err)
+	}
 
 	response := PromoteResponse{
 		PositionID: employeePosition.ID,

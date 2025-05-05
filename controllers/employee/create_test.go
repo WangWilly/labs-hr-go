@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/WangWilly/labs-hr-go/pkgs/dtos"
 	"github.com/WangWilly/labs-hr-go/pkgs/models"
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.uber.org/mock/gomock"
 )
@@ -65,6 +67,26 @@ func TestCreate(t *testing.T) {
 						pos.ID = employeePosition.ID
 						return nil
 					})
+
+					// Expect cache manager to be called with the correct employee details
+				expectedCache := dtos.EmployeeV1Response{
+					EmployeeID: employeeInfo.ID,
+					Name:       employeeInfo.Name,
+					Age:        employeeInfo.Age,
+					Phone:      employeeInfo.Phone,
+					Email:      employeeInfo.Email,
+					Address:    employeeInfo.Address,
+					CreatedAt:  utils.FormatedTime(employeeInfo.CreatedAt),
+					UpdatedAt:  utils.FormatedTime(employeeInfo.UpdatedAt),
+					PositionID: employeePosition.ID,
+					Position:   employeePosition.Position,
+					Department: employeePosition.Department,
+					Salary:     employeePosition.Salary,
+					StartDate:  utils.FormatedTime(employeePosition.StartDate),
+				}
+				s.cacheManager.EXPECT().
+					SetEmployeeDetailV1(gomock.Any(), employeeInfo.ID, gomock.Eq(expectedCache), time.Duration(0)).
+					Return(nil)
 
 				// Expected response
 				expectedResponse := CreateResponse{

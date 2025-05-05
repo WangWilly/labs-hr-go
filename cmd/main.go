@@ -12,6 +12,7 @@ import (
 	"github.com/WangWilly/labs-hr-go/controllers/attendance"
 	"github.com/WangWilly/labs-hr-go/controllers/employee"
 	"github.com/WangWilly/labs-hr-go/database/migrations"
+	"github.com/WangWilly/labs-hr-go/pkgs/cachemanager"
 	"github.com/WangWilly/labs-hr-go/pkgs/repos/employeeattendancerepo"
 	"github.com/WangWilly/labs-hr-go/pkgs/repos/employeeinforepo"
 	"github.com/WangWilly/labs-hr-go/pkgs/repos/employeepositionrepo"
@@ -33,6 +34,9 @@ type envConfig struct {
 	DbCfg     utils.DbConfig `env:",prefix="`
 	DbMigrate bool           `env:"DB_MIGRATE,default=true"`
 	DbSeed    bool           `env:"DB_SEED,default=false"`
+
+	// Redis configuration
+	RedisCfg utils.RedisConfig `env:",prefix="`
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -77,17 +81,34 @@ func main() {
 	}
 
 	////////////////////////////////////////////////////////////////////////////
+	// Initialize Redis client
+
+	redisClient, err := utils.GetRedis(ctx, cfg.RedisCfg)
+	if err != nil {
+		panic(fmt.Errorf("failed to create Redis client: %w", err))
+	}
+	fmt.Println("Redis client created successfully!")
+	defer func() {
+		if err := redisClient.Close(); err != nil {
+			panic(fmt.Errorf("failed to close Redis client: %w", err))
+		}
+		fmt.Println("Redis client closed successfully!")
+	}()
+
+	////////////////////////////////////////////////////////////////////////////
+	// Initialize modules
 
 	timeModule := timemodule.New()
 	employeeInfoRepo := employeeinforepo.New()
 	employeePositionRepo := employeepositionrepo.New()
 	employeeAttendanceRepo := employeeattendancerepo.New()
+	cacheManager := cachemanager.New(redisClient)
 
 	////////////////////////////////////////////////////////////////////////////
 	// Initialize the controllers
 
 	employeeCtrlCfg := employee.Config{}
-	employeeCtrl := employee.NewController(employeeCtrlCfg, db, timeModule, employeeInfoRepo, employeePositionRepo)
+	employeeCtrl := employee.NewController(employeeCtrlCfg, db, timeModule, employeeInfoRepo, employeePositionRepo, cacheManager)
 	employeeCtrl.RegisterRoutes(r)
 
 	attendanceCtrlCfg := attendance.Config{}

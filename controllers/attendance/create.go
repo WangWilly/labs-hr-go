@@ -48,7 +48,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 
 	////////////////////////////////////////////////////////////////////////////
 
-	if currAttendance == nil {
+	if currAttendance == nil || currAttendance.ClockIn != currAttendance.ClockOut {
 		// Create a new attendance record for clock-in
 		newAttendance, err := c.employeeAttendanceRepo.CreateForClockIn(ctx, c.db, req.EmployeeID, employeePosition.ID, c.timeModule.Now())
 		if err != nil {
@@ -66,30 +66,15 @@ func (c *Controller) Create(ctx *gin.Context) {
 
 	////////////////////////////////////////////////////////////////////////////
 
-	if currAttendance.ClockIn == currAttendance.ClockOut {
-		currAttendance, err = c.employeeAttendanceRepo.UpdateForClockOut(ctx, c.db, currAttendance.ID, c.timeModule.Now())
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update attendance"})
-			return
-		}
-		ctx.JSON(http.StatusCreated, CreateResponse{
-			AttendanceID: currAttendance.ID,
-			PositionID:   currAttendance.PositionID,
-			ClockInTime:  utils.FormatedTime(currAttendance.ClockIn),
-			ClockOutTime: utils.FormatedTime(currAttendance.ClockOut),
-		})
-		return
-	}
-
-	newAttendance, err := c.employeeAttendanceRepo.CreateForClockIn(ctx, c.db, req.EmployeeID, employeePosition.ID, c.timeModule.Now())
+	currAttendance, err = c.employeeAttendanceRepo.UpdateForClockOut(ctx, c.db, currAttendance.ID, c.timeModule.Now())
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create attendance"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update attendance"})
 		return
 	}
 	ctx.JSON(http.StatusCreated, CreateResponse{
-		AttendanceID: newAttendance.ID,
-		PositionID:   newAttendance.PositionID,
-		ClockInTime:  utils.FormatedTime(newAttendance.ClockIn),
-		ClockOutTime: "",
+		AttendanceID: currAttendance.ID,
+		PositionID:   currAttendance.PositionID,
+		ClockInTime:  utils.FormatedTime(currAttendance.ClockIn),
+		ClockOutTime: utils.FormatedTime(currAttendance.ClockOut),
 	})
 }

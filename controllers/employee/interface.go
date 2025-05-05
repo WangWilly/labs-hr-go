@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/WangWilly/labs-hr-go/pkgs/dtos"
 	"github.com/WangWilly/labs-hr-go/pkgs/models"
 	"gorm.io/gorm"
 )
@@ -24,4 +25,10 @@ type EmployeePositionRepo interface {
 	Get(ctx context.Context, tx *gorm.DB, id int64) (*models.EmployeePosition, error)
 	GetCurrentByEmployeeID(ctx context.Context, tx *gorm.DB, employeeID int64, nowtime time.Time) (*models.EmployeePosition, error)
 	MustGet(ctx context.Context, tx *gorm.DB, id int64) (*models.EmployeePosition, error)
+}
+
+type CacheManager interface {
+	GetEmployeeDetailV1(ctx context.Context, employeeID int64) (*dtos.EmployeeV1Response, error)
+	SetEmployeeDetailV1(ctx context.Context, employeeID int64, data dtos.EmployeeV1Response, expired time.Duration) error
+	DeleteEmployeeDetailV1(ctx context.Context, employeeID int64) error
 }

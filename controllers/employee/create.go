@@ -1,10 +1,13 @@
 package employee
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/WangWilly/labs-hr-go/pkgs/dtos"
 	"github.com/WangWilly/labs-hr-go/pkgs/models"
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,6 +30,8 @@ type CreateResponse struct {
 	EmployeeID int64 `json:"employee_id"`
 	PositionID int64 `json:"position_id"`
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 func (c *Controller) Create(ctx *gin.Context) {
 	var req CreateRequest
@@ -65,6 +70,27 @@ func (c *Controller) Create(ctx *gin.Context) {
 	}
 
 	////////////////////////////////////////////////////////////////////////////
+
+	// Cache the employee detail
+	employeeDetail := dtos.EmployeeV1Response{
+		EmployeeID: employeeInfo.ID,
+		Name:       employeeInfo.Name,
+		Age:        employeeInfo.Age,
+		Phone:      employeeInfo.Phone,
+		Email:      employeeInfo.Email,
+		Address:    employeeInfo.Address,
+		CreatedAt:  utils.FormatedTime(employeeInfo.CreatedAt),
+		UpdatedAt:  utils.FormatedTime(employeeInfo.UpdatedAt),
+
+		PositionID: employeePosition.ID,
+		Position:   employeePosition.Position,
+		Department: employeePosition.Department,
+		Salary:     employeePosition.Salary,
+		StartDate:  utils.FormatedTime(employeePosition.StartDate),
+	}
+	if err := c.cacheManager.SetEmployeeDetailV1(ctx, employeeInfo.ID, employeeDetail, 0); err != nil {
+		fmt.Printf("failed to cache employee detail: %v\n", err)
+	}
 
 	ctx.JSON(http.StatusCreated, CreateResponse{
 		EmployeeID: employeeInfo.ID,

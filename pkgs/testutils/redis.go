@@ -8,50 +8,43 @@ import (
 	"testing"
 	"time"
 
-	"gorm.io/gorm"
-
-	"github.com/WangWilly/labs-hr-go/database/migrations"
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
+	"github.com/redis/go-redis/v9"
 	"github.com/sethvargo/go-envconfig"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
 
-type DockerTestDatabaseInstance struct {
+type DockerTestRedisInstance struct {
 	DockerPool      *dockertest.Pool
 	DockerContainer *dockertest.Resource
 
-	DB *gorm.DB
+	RedisClient *redis.Client
 }
 
-var dbInstance *DockerTestDatabaseInstance
+var redisInstance *DockerTestRedisInstance
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func (d *DockerTestDatabaseInstance) MustClose() {
-	if err := d.Close(); err != nil {
+func (r *DockerTestRedisInstance) MustClose() {
+	if err := r.Close(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 }
 
-func (d *DockerTestDatabaseInstance) Close() (retErr error) {
+func (r *DockerTestRedisInstance) Close() (retErr error) {
 	defer func() {
-		if err := d.DockerPool.Purge(d.DockerContainer); err != nil {
+		if err := r.DockerPool.Purge(r.DockerContainer); err != nil {
 			retErr = fmt.Errorf("failed to purge database container: %w", err)
 			return
 		}
 	}()
 
-	sqlDB, err := d.DB.DB()
-	if err != nil {
-		return fmt.Errorf("failed to get sqlDB from gorm: %w", err)
-	}
-
-	if err = sqlDB.Close(); err != nil {
-		return fmt.Errorf("failed to close sqlDB: %w", err)
+	if err := r.RedisClient.Close(); err != nil {
+		return fmt.Errorf("failed to close redis client: %w", err)
 	}
 
 	return nil
@@ -59,35 +52,24 @@ func (d *DockerTestDatabaseInstance) Close() (retErr error) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func NewDatabase() (*DockerTestDatabaseInstance, error) {
+func NewRedis() (*DockerTestRedisInstance, error) {
 	////////////////////////////////////////////////////////////////////////////
 	// Load environment variables
 
 	ctx := context.Background()
-
-	dbCfg := &utils.DbConfig{}
-	if err := envconfig.Process(ctx, dbCfg); err != nil {
+	redisCfg := utils.RedisConfig{}
+	if err := envconfig.Process(ctx, &redisCfg); err != nil {
 		return nil, fmt.Errorf("failed to process env config: %w", err)
 	}
 
-	var dockerTestOptions *dockertest.RunOptions
-	var dockerTestPort string
-	switch dbCfg.Driver {
-	case "mysql":
-		dockerTestOptions = &dockertest.RunOptions{
-			Repository: "mysql",
-			Tag:        "9.3.0",
-			Env: []string{
-				"MYSQL_ROOT_PASSWORD=" + dbCfg.Password,
-				"MYSQL_DATABASE=" + dbCfg.Database,
-				"MYSQL_USER=" + dbCfg.User,
-				"MYSQL_PASSWORD=" + dbCfg.Password,
-			},
-		}
-		dockerTestPort = "3306/tcp"
-	default:
-		return nil, fmt.Errorf("unsupported database driver: %s", dbCfg.Driver)
+	dockerTestOptions := &dockertest.RunOptions{
+		Repository: "redis",
+		Tag:        "7.4.3-alpine",
+		Env: []string{
+			"LANG=C",
+		},
 	}
+	dockerTestPort := "6379/tcp"
 
 	////////////////////////////////////////////////////////////////////////////
 	// Create a new pool
@@ -104,50 +86,38 @@ func NewDatabase() (*DockerTestDatabaseInstance, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to start database container: %w", err)
 	}
-	_ = container.Expire(1200)
+	_ = container.Expire(120)
 
 	////////////////////////////////////////////////////////////////////////////
 	// Wait for the container to be ready
 
-	host := container.GetBoundIP(dockerTestPort)
-	port := container.GetPort(dockerTestPort)
-	dbCfg.Host = host
-	dbCfg.Port = port
-
-	fmt.Printf("Waiting for database to be ready on %s:%s...\n", host, port)
+	addr := container.GetBoundIP(dockerTestPort) +
+		":" + container.GetPort(dockerTestPort)
+	redisCfg.Addr = addr
 
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	pool.MaxWait = 120 * time.Second
-	var gormDB *gorm.DB
+	var redisClient *redis.Client
 	if err = pool.Retry(func() error {
-		gormDB, err = utils.GetDB(*dbCfg)
+		redisClient, err = utils.GetRedis(ctx, redisCfg)
 		if err != nil {
-			return fmt.Errorf("failed to create database connect: %w", err)
+			return fmt.Errorf("failed to create redis connect => %w", err)
 		}
 
-		sqlDB, err := gormDB.DB()
-		if err != nil {
-			return fmt.Errorf("failed to get sql db: %w", err)
-		}
-
-		if err := migrations.Apply(gormDB); err != nil {
-			return fmt.Errorf("failed to create migrate driver: %w", err)
-		}
-
-		return sqlDB.Ping()
+		return nil
 	}); err != nil {
 		return nil, err
 	}
 
-	return &DockerTestDatabaseInstance{
+	return &DockerTestRedisInstance{
 		DockerPool:      pool,
 		DockerContainer: container,
-		DB:              gormDB,
+		RedisClient:     redisClient,
 	}, nil
 }
 
-func MustNewDatabase() *DockerTestDatabaseInstance {
-	instance, err := NewDatabase()
+func MustNewRedis() *DockerTestRedisInstance {
+	instance, err := NewRedis()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
@@ -156,19 +126,18 @@ func MustNewDatabase() *DockerTestDatabaseInstance {
 	return instance
 }
 
-func GetDB() *DockerTestDatabaseInstance {
-	return dbInstance
+func GetRedis() *DockerTestRedisInstance {
+	return redisInstance
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func BeforeTestDb(m *testing.M) {
-	fmt.Println("BeforeTestDb")
-	dbInstance = MustNewDatabase()
+func BeforeTestDbRedis(m *testing.M) {
+	redisInstance = MustNewRedis()
 
 	code := m.Run()
 	// defer() won't work since os.Exit() is called
-	if err := dbInstance.Close(); err != nil {
+	if err := redisInstance.Close(); err != nil {
 		log.Fatalf("Could not purge resource: %s", err)
 	}
 

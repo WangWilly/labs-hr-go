@@ -1,6 +1,7 @@
 package employee
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -71,6 +72,23 @@ func (c *Controller) Update(ctx *gin.Context) {
 	}
 
 	////////////////////////////////////////////////////////////////////////////
+
+	// Update the cache
+	employeeDetail, err := c.cacheManager.GetEmployeeDetailV1(ctx, employeeID)
+	if err != nil {
+		fmt.Println("cache error:", err)
+	}
+	if err == nil && employeeDetail != nil {
+		employeeDetail.Name = employeeInfo.Name
+		employeeDetail.Age = employeeInfo.Age
+		employeeDetail.Address = employeeInfo.Address
+		employeeDetail.Phone = employeeInfo.Phone
+		employeeDetail.Email = employeeInfo.Email
+
+		if err := c.cacheManager.SetEmployeeDetailV1(ctx, employeeID, *employeeDetail, 0); err != nil {
+			fmt.Println("cache error:", err)
+		}
+	}
 
 	ctx.JSON(http.StatusOK, UpdateResponse{
 		ID:      employeeInfo.ID,
