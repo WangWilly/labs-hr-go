@@ -63,6 +63,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		panic(err)
+	}
 
 	if cfg.DbMigrate {
 		if err := migrations.Apply(db); err != nil {
@@ -88,12 +92,6 @@ func main() {
 		panic(fmt.Errorf("failed to create Redis client: %w", err))
 	}
 	fmt.Println("Redis client created successfully!")
-	defer func() {
-		if err := redisClient.Close(); err != nil {
-			panic(fmt.Errorf("failed to close Redis client: %w", err))
-		}
-		fmt.Println("Redis client closed successfully!")
-	}()
 
 	////////////////////////////////////////////////////////////////////////////
 	// Initialize modules
@@ -160,7 +158,17 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// TODO:
+	// Shutdown the server gracefully
+	if err := redisClient.Close(); err != nil {
+		panic(fmt.Errorf("failed to close Redis client: %w", err))
+	}
+	fmt.Println("Redis client closed successfully!")
+
+	// Close the database connection
+	if err := sqlDB.Close(); err != nil {
+		panic(fmt.Errorf("failed to close database connection: %w", err))
+	}
+	fmt.Println("Database connection closed successfully!")
 
 	// Gracefully shutdown the server
 	fmt.Println("Shutdown HTTP Server ...")

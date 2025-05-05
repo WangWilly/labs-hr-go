@@ -10,7 +10,7 @@ import (
 
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/smartystreets/goconvey/convey"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -99,19 +99,19 @@ func (c *TestHttpServer) MustDoAndMatchCode(
 	code int,
 ) {
 	respCode := c.MustDo(t, method, url, reqBody, respBody)
-	So(respCode, ShouldEqual, code)
+	convey.So(respCode, convey.ShouldEqual, code)
 }
 
 /**
 func (c *TestHttpServer) MustSucceeded(t *testing.T, method string, url string, reqBody interface{}, respBody interface{}, code int) {
 	respCode := c.MustDo(t, method, url, reqBody, respBody)
-	So(respCode, ShouldEqual, code)
+	convey.So(respCode, convey.ShouldEqual, code)
 }
 
 func (c *TestHttpServer) MustFailed(t *testing.T, method string, path string, reqBody interface{}, err *errors.Error) {
 	respBody := new(errors.Error)
 	respCode := c.MustDo(t, method, path, reqBody, respBody)
-	So(respBody.Message, ShouldEqual, err.Message)
-	So(respCode, ShouldEqual, err.Code)
+	convey.So(respBody.Message, convey.ShouldEqual, err.Message)
+	convey.So(respCode, convey.ShouldEqual, err.Code)
 }
 */

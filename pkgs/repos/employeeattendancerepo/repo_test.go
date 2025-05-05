@@ -1,7 +1,6 @@
 package employeeattendancerepo
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -23,7 +22,7 @@ func TestMain(m *testing.M) {
 func TestRepo_CRUD(t *testing.T) {
 	Convey("TestRepo_CRUD", t, func() {
 		// Setup
-		ctx := context.Background()
+		ctx := t.Context()
 		db := testutils.GetDB().DB
 		repo := New()
 		faker := gofakeit.New(0)

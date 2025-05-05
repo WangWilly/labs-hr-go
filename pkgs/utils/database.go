@@ -25,6 +25,11 @@ type DbConfig struct {
 
 	SlowThreshold time.Duration `env:"DB_SLOW_THRESHOLD,default=200ms"`
 	IsDev         bool          `env:"DB_IS_DEV,default=true"`
+
+	MaxIdleConns    int           `env:"DB_MAX_IDLE_CONNS,default=10"`
+	MaxOpenConns    int           `env:"DB_MAX_OPEN_CONNS,default=100"`
+	ConnMaxLifetime time.Duration `env:"DB_CONN_MAX_LIFETIME,default=1h"`
+	ConnMaxIdleTime time.Duration `env:"DB_CONN_MAX_IDLE_TIME,default=1h"`
 }
 
 const (
@@ -74,15 +79,15 @@ func GetDB(cfg DbConfig) (*gorm.DB, error) {
 	////////////////////////////////////////////////////////////////////////////
 	// Set the connection pool settings
 
-	// sqlDB, err := db.DB()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// sqlDB.SetMaxIdleConns(10)
-	// sqlDB.SetMaxOpenConns(100)
-	// // Set the connection timeout
-	// sqlDB.SetConnMaxLifetime(time.Hour)
-	// sqlDB.SetConnMaxIdleTime(time.Hour)
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
+	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
+	// Set the connection timeout
+	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+	sqlDB.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 
 	////////////////////////////////////////////////////////////////////////////
 

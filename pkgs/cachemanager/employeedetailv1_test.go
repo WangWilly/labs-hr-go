@@ -1,7 +1,6 @@
 package cachemanager
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 func TestEmployeeDetailV1(t *testing.T) {
 	testInit(t, func(s *testSuite) {
 		Convey("Given an employee cache manager", t, func() {
-			ctx := context.Background()
+			ctx := t.Context()
 			employeeID := int64(123)
 
 			// Create test data

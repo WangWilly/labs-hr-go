@@ -359,7 +359,7 @@ func TestTaskPoolWithContextCancellation(t *testing.T) {
 		defer ctrl.Finish()
 
 		// Create a parent context that we can cancel
-		parentCtx, cancelParent := context.WithCancel(context.Background())
+		parentCtx, cancelParent := context.WithCancel(t.Context())
 
 		// Create a custom constructor to use our parent context
 		customNewTaskPool := func(cfg Config) *TaskPool {

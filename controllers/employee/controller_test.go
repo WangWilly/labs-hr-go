@@ -6,8 +6,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/WangWilly/labs-hr-go/pkgs/testutils"
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/sethvargo/go-envconfig"
 	gomock "go.uber.org/mock/gomock"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
@@ -31,11 +31,7 @@ func testInit(t *testing.T, test func(*testSuite)) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	db, mockDB, _ := sqlmock.New()
-	gormDB, _ := gorm.Open(
-		mysql.New(mysql.Config{Conn: db}),
-		&gorm.Config{SkipDefaultTransaction: true},
-	)
+	gormDB, mockDB := testutils.GetMockDB(t)
 
 	timeModule := NewMockTimeModule(ctrl)
 	employeeInfoRepo := NewMockEmployeeInfoRepo(ctrl)
@@ -43,6 +39,9 @@ func testInit(t *testing.T, test func(*testSuite)) {
 	cacheManager := NewMockCacheManager(ctrl)
 
 	cfg := Config{}
+	if err := envconfig.Process(t.Context(), &cfg); err != nil {
+		t.Fatal(err)
+	}
 	controller := NewController(
 		cfg,
 		gormDB,

@@ -31,7 +31,7 @@ func TestDownloadTaskConstructors(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockUUID := uuid.NewMockUUID(ctrl)
-		ctx := context.Background()
+		ctx := t.Context()
 		url := "https://example.com/video"
 		filePath := "/tmp/video.mp4"
 		retryDelay := 5 * time.Second
@@ -93,7 +93,7 @@ func TestGetters(t *testing.T) {
 		maxRetries := 5
 		maxTimeout := 10 * time.Minute
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 
 		task := &DownloadTask{
@@ -148,7 +148,7 @@ func TestGetters(t *testing.T) {
 
 func TestExecute(t *testing.T) {
 	Convey("Given a download task", t, func() {
-		ctx := context.Background()
+		ctx := t.Context()
 		taskID := "test-execute-task"
 		url := "https://example.com/video"
 		filePath := "/tmp/test-execute.mp4"
@@ -209,7 +209,7 @@ func TestExecute(t *testing.T) {
 
 func TestSetRetrySignal(t *testing.T) {
 	Convey("Given a download task with retry configuration", t, func() {
-		ctx := context.Background()
+		ctx := t.Context()
 		taskID := "test-retry-task"
 		url := "https://example.com/video"
 		filePath := "/tmp/test-retry.mp4"
@@ -253,7 +253,7 @@ func TestSetRetrySignal(t *testing.T) {
 
 func TestCancel(t *testing.T) {
 	Convey("Given a download task", t, func() {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		taskID := "test-cancel-task"
 		url := "https://example.com/video"
