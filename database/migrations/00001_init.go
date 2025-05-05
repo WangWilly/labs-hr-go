@@ -2,8 +2,25 @@ package migrations
 
 import (
 	"github.com/WangWilly/labs-hr-go/pkgs/models"
+	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
 )
+
+////////////////////////////////////////////////////////////////////////////////
+
+var (
+	m00001 = &gormigrate.Migration{
+		ID: "00001",
+		Migrate: func(tx *gorm.DB) error {
+			return Up00001Init(tx)
+		},
+		Rollback: func(tx *gorm.DB) error {
+			return Down00001Init(tx)
+		},
+	}
+)
+
+////////////////////////////////////////////////////////////////////////////////
 
 func Up00001Init(db *gorm.DB) error {
 	// This code is executed when the migration is applied.

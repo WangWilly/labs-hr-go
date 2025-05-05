@@ -5,16 +5,10 @@ import (
 	"gorm.io/gorm"
 )
 
+////////////////////////////////////////////////////////////////////////////////
+
 var migrationList = []*gormigrate.Migration{
-	{
-		ID: "00001",
-		Migrate: func(tx *gorm.DB) error {
-			return Up00001Init(tx)
-		},
-		Rollback: func(tx *gorm.DB) error {
-			return Down00001Init(tx)
-		},
-	},
+	m00001,
 }
 
 func Apply(db *gorm.DB) error {
