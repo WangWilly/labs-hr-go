@@ -5,8 +5,6 @@ services:
     restart: always
     ports:
       - "8080:8080"
-    volumes:
-      - './public/downloads:/app/public/downloads'
     environment:
       PORT: 8080
       DB_HOST: db
@@ -15,9 +13,12 @@ services:
       DB_PASSWORD: labs-hr-go
       DB_DATABASE: labs-hr-go
       DB_SEED: false
+      REDIS_ADDR: redis:6379
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   db:
     image: mysql:9.3.0
@@ -30,7 +31,7 @@ services:
     volumes:
       - './storage/db:/var/lib/mysql'
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping"]
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       interval: 10s
       timeout: 60s
       retries: 10
@@ -41,7 +42,7 @@ services:
     volumes:
       - './storage/redis:/data'
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       interval: 10s
       timeout: 60s
       retries: 10

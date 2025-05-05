@@ -17,8 +17,14 @@ services:
       interval: 10s
       timeout: 60s
       retries: 10
+
   redis:
     image: redis:7.4.3-alpine
     restart: always
     ports:
       - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 10s
+      timeout: 60s
+      retries: 10
