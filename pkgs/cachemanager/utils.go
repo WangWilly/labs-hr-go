@@ -18,6 +18,7 @@ type cacheMainKey string
 
 const (
 	employeeDetailV1 cacheMainKey = "employee_detail_v1"
+	attendanceV1     cacheMainKey = "attendance_v1"
 )
 
 func buildCacheFullKey(k cacheMainKey, pairs map[string]any) (string, error) {

@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 	time "time"
 
+	dtos "github.com/WangWilly/labs-hr-go/pkgs/dtos"
 	models "github.com/WangWilly/labs-hr-go/pkgs/models"
 	gomock "go.uber.org/mock/gomock"
 	gorm "gorm.io/gorm"
@@ -163,4 +164,72 @@ func (m *MockEmployeeAttendanceRepo) UpdateForClockOut(ctx context.Context, tx *
 func (mr *MockEmployeeAttendanceRepoMockRecorder) UpdateForClockOut(ctx, tx, attendanceID, clockOutTime any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateForClockOut", reflect.TypeOf((*MockEmployeeAttendanceRepo)(nil).UpdateForClockOut), ctx, tx, attendanceID, clockOutTime)
+}
+
+// MockCacheManager is a mock of CacheManager interface.
+type MockCacheManager struct {
+	ctrl     *gomock.Controller
+	recorder *MockCacheManagerMockRecorder
+	isgomock struct{}
+}
+
+// MockCacheManagerMockRecorder is the mock recorder for MockCacheManager.
+type MockCacheManagerMockRecorder struct {
+	mock *MockCacheManager
+}
+
+// NewMockCacheManager creates a new mock instance.
+func NewMockCacheManager(ctrl *gomock.Controller) *MockCacheManager {
+	mock := &MockCacheManager{ctrl: ctrl}
+	mock.recorder = &MockCacheManagerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCacheManager) EXPECT() *MockCacheManagerMockRecorder {
+	return m.recorder
+}
+
+// GetAttendanceV1 mocks base method.
+func (m *MockCacheManager) GetAttendanceV1(ctx context.Context, employeeID int64) (*dtos.AttendanceV1Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAttendanceV1", ctx, employeeID)
+	ret0, _ := ret[0].(*dtos.AttendanceV1Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAttendanceV1 indicates an expected call of GetAttendanceV1.
+func (mr *MockCacheManagerMockRecorder) GetAttendanceV1(ctx, employeeID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAttendanceV1", reflect.TypeOf((*MockCacheManager)(nil).GetAttendanceV1), ctx, employeeID)
+}
+
+// GetEmployeeDetailV1 mocks base method.
+func (m *MockCacheManager) GetEmployeeDetailV1(ctx context.Context, employeeID int64) (*dtos.EmployeeV1Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEmployeeDetailV1", ctx, employeeID)
+	ret0, _ := ret[0].(*dtos.EmployeeV1Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEmployeeDetailV1 indicates an expected call of GetEmployeeDetailV1.
+func (mr *MockCacheManagerMockRecorder) GetEmployeeDetailV1(ctx, employeeID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeeDetailV1", reflect.TypeOf((*MockCacheManager)(nil).GetEmployeeDetailV1), ctx, employeeID)
+}
+
+// SetAttendanceV1 mocks base method.
+func (m *MockCacheManager) SetAttendanceV1(ctx context.Context, employeeID int64, data dtos.AttendanceV1Response, expired time.Duration) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetAttendanceV1", ctx, employeeID, data, expired)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetAttendanceV1 indicates an expected call of SetAttendanceV1.
+func (mr *MockCacheManagerMockRecorder) SetAttendanceV1(ctx, employeeID, data, expired any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAttendanceV1", reflect.TypeOf((*MockCacheManager)(nil).SetAttendanceV1), ctx, employeeID, data, expired)
 }

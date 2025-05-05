@@ -1,8 +1,11 @@
 package attendance
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/WangWilly/labs-hr-go/pkgs/dtos"
+	"github.com/WangWilly/labs-hr-go/pkgs/models"
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -13,12 +16,7 @@ type CreateRequest struct {
 	EmployeeID int64 `json:"employee_id" binding:"required"`
 }
 
-type CreateResponse struct {
-	AttendanceID int64  `json:"attendance_id"`
-	PositionID   int64  `json:"position_id"`
-	ClockInTime  string `json:"clock_in_time"`
-	ClockOutTime string `json:"clock_out_time"`
-}
+////////////////////////////////////////////////////////////////////////////////
 
 func (c *Controller) Create(ctx *gin.Context) {
 	var req CreateRequest
@@ -29,52 +27,126 @@ func (c *Controller) Create(ctx *gin.Context) {
 
 	////////////////////////////////////////////////////////////////////////////
 
-	// Get the current position of the employee
-	employeePosition, err := c.employeePositionRepo.GetCurrentByEmployeeID(ctx, c.db, req.EmployeeID, c.timeModule.Now())
+	// Get the employee's current position
+	positionID, err := c.getEmployeePosition(ctx, req.EmployeeID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get employee position"})
 		return
 	}
-	if employeePosition == nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "employee position not found"})
-		return
-	}
 
-	currAttendance, err := c.employeeAttendanceRepo.Last(ctx, c.db, req.EmployeeID)
+	// Get the employee's current attendance
+	attendance, err := c.getEmployeeAttendance(ctx, req.EmployeeID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get last attendance"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get employee attendance"})
 		return
 	}
 
 	////////////////////////////////////////////////////////////////////////////
 
+	// Create or update the attendance record
+	attendanceResponse, err := c.createClockIn(ctx, req.EmployeeID, positionID, attendance)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create/update attendance"})
+		return
+	}
+	// Cache the attendance record
+	if err := c.cacheManage.SetAttendanceV1(ctx, req.EmployeeID, *attendanceResponse, 0); err != nil {
+		fmt.Println("failed to cache attendance:", err)
+	}
+
+	ctx.JSON(http.StatusCreated, attendanceResponse)
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+func (c *Controller) getEmployeePosition(ctx *gin.Context, employeeID int64) (int64, error) {
+	if employeeID <= 0 {
+		return 0, fmt.Errorf("invalid employee ID")
+	}
+
+	employeePosition, err := c.cacheManage.GetEmployeeDetailV1(ctx, employeeID)
+	if err != nil {
+		fmt.Println("failed to get employee position from cache:", err)
+	}
+	if employeePosition != nil {
+		return employeePosition.PositionID, nil
+	}
+
+	// Get the current position of the employee
+	dbEmployeePosition, err := c.employeePositionRepo.GetCurrentByEmployeeID(ctx, c.db, employeeID, c.timeModule.Now())
+	if err != nil {
+		return 0, fmt.Errorf("failed to get employee position: %w", err)
+	}
+	if dbEmployeePosition == nil {
+		return 0, fmt.Errorf("employee position not found")
+	}
+	return dbEmployeePosition.ID, nil
+}
+
+func (c *Controller) getEmployeeAttendance(ctx *gin.Context, employeeID int64) (*models.EmployeeAttendance, error) {
+	if employeeID <= 0 {
+		return nil, fmt.Errorf("invalid employee ID")
+	}
+
+	// Get the current attendance of the employee
+	dbAttendance, err := c.employeeAttendanceRepo.Last(ctx, c.db, employeeID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get employee attendance: %w", err)
+	}
+	if dbAttendance == nil {
+		return nil, nil
+	}
+	return dbAttendance, nil
+}
+
+func (c *Controller) createClockIn(
+	ctx *gin.Context,
+	employeeID int64,
+	positionID int64,
+	currAttendance *models.EmployeeAttendance,
+) (*dtos.AttendanceV1Response, error) {
+	if employeeID <= 0 {
+		return nil, fmt.Errorf("invalid employee ID")
+	}
+	if positionID <= 0 {
+		return nil, fmt.Errorf("invalid position ID")
+	}
+
 	if currAttendance == nil || currAttendance.ClockIn != currAttendance.ClockOut {
 		// Create a new attendance record for clock-in
-		newAttendance, err := c.employeeAttendanceRepo.CreateForClockIn(ctx, c.db, req.EmployeeID, employeePosition.ID, c.timeModule.Now())
+		newAttendance, err := c.employeeAttendanceRepo.CreateForClockIn(
+			ctx,
+			c.db,
+			employeeID,
+			positionID,
+			c.timeModule.Now(),
+		)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create attendance"})
-			return
+			return nil, fmt.Errorf("failed to create attendance: %w", err)
 		}
-		ctx.JSON(http.StatusCreated, CreateResponse{
+		return &dtos.AttendanceV1Response{
 			AttendanceID: newAttendance.ID,
 			PositionID:   newAttendance.PositionID,
 			ClockInTime:  utils.FormatedTime(newAttendance.ClockIn),
 			ClockOutTime: "",
-		})
-		return
+		}, nil
 	}
 
 	////////////////////////////////////////////////////////////////////////////
 
-	currAttendance, err = c.employeeAttendanceRepo.UpdateForClockOut(ctx, c.db, currAttendance.ID, c.timeModule.Now())
+	currAttendance, err := c.employeeAttendanceRepo.UpdateForClockOut(
+		ctx,
+		c.db,
+		currAttendance.ID,
+		c.timeModule.Now(),
+	)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update attendance"})
-		return
+		return nil, fmt.Errorf("failed to update attendance: %w", err)
 	}
-	ctx.JSON(http.StatusCreated, CreateResponse{
+	return &dtos.AttendanceV1Response{
 		AttendanceID: currAttendance.ID,
 		PositionID:   currAttendance.PositionID,
 		ClockInTime:  utils.FormatedTime(currAttendance.ClockIn),
 		ClockOutTime: utils.FormatedTime(currAttendance.ClockOut),
-	})
+	}, nil
 }

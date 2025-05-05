@@ -20,6 +20,7 @@ type testSuite struct {
 	timeModule             *MockTimeModule
 	employeePositionRepo   *MockEmployeePositionRepo
 	employeeAttendanceRepo *MockEmployeeAttendanceRepo
+	cacheManager           *MockCacheManager
 
 	controller *Controller
 	testServer testutils.TestHttpServer
@@ -39,6 +40,7 @@ func testInit(t *testing.T, test func(*testSuite)) {
 	timeModule := NewMockTimeModule(ctrl)
 	employeePositionRepo := NewMockEmployeePositionRepo(ctrl)
 	employeeAttendanceRepo := NewMockEmployeeAttendanceRepo(ctrl)
+	cacheManager := NewMockCacheManager(ctrl)
 
 	cfg := Config{}
 	controller := NewController(
@@ -47,6 +49,7 @@ func testInit(t *testing.T, test func(*testSuite)) {
 		timeModule,
 		employeePositionRepo,
 		employeeAttendanceRepo,
+		cacheManager,
 	)
 	testServer := testutils.NewTestHttpServer(controller)
 	faker := gofakeit.New(0)
@@ -56,6 +59,7 @@ func testInit(t *testing.T, test func(*testSuite)) {
 		timeModule:             timeModule,
 		employeePositionRepo:   employeePositionRepo,
 		employeeAttendanceRepo: employeeAttendanceRepo,
+		cacheManager:           cacheManager,
 		controller:             controller,
 		testServer:             testServer,
 		faker:                  faker,

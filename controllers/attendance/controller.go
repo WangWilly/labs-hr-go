@@ -17,6 +17,7 @@ type Controller struct {
 	timeModule             TimeModule
 	employeePositionRepo   EmployeePositionRepo
 	employeeAttendanceRepo EmployeeAttendanceRepo
+	cacheManage            CacheManager
 }
 
 func NewController(
@@ -25,6 +26,7 @@ func NewController(
 	timeModule TimeModule,
 	employeePositionRepo EmployeePositionRepo,
 	employeeAttendanceRepo EmployeeAttendanceRepo,
+	cacheManage CacheManager,
 ) *Controller {
 	return &Controller{
 		cfg:                    cfg,
@@ -32,6 +34,7 @@ func NewController(
 		timeModule:             timeModule,
 		employeePositionRepo:   employeePositionRepo,
 		employeeAttendanceRepo: employeeAttendanceRepo,
+		cacheManage:            cacheManage,
 	}
 }
 

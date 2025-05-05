@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/WangWilly/labs-hr-go/pkgs/dtos"
 	"github.com/WangWilly/labs-hr-go/pkgs/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.uber.org/mock/gomock"
@@ -46,6 +47,11 @@ func TestCreate(t *testing.T) {
 				// Set up expectations
 				s.timeModule.EXPECT().Now().Return(nowTime).Times(2)
 
+				// Add cache manager expectations
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, nil)
+
 				s.employeePositionRepo.EXPECT().
 					GetCurrentByEmployeeID(gomock.Any(), s.db, employeeID, nowTime).
 					Return(employeePosition, nil)
@@ -58,16 +64,21 @@ func TestCreate(t *testing.T) {
 					CreateForClockIn(gomock.Any(), s.db, employeeID, positionID, nowTime).
 					Return(newAttendance, nil)
 
-				// Expected response
-				expectedResponse := CreateResponse{
+				// Expected response for cache
+				expectedResponse := dtos.AttendanceV1Response{
 					AttendanceID: attendanceID,
 					PositionID:   positionID,
 					ClockInTime:  "2023-06-15 09:00:00",
 					ClockOutTime: "",
 				}
 
+				// Expect cache set call
+				s.cacheManager.EXPECT().
+					SetAttendanceV1(gomock.Any(), employeeID, expectedResponse, gomock.Any()).
+					Return(nil)
+
 				// Make the request and verify response
-				var actualResponse CreateResponse
+				var actualResponse dtos.AttendanceV1Response
 				s.testServer.MustDoAndMatchCode(
 					t,
 					http.MethodPost,
@@ -106,6 +117,11 @@ func TestCreate(t *testing.T) {
 				// Set up expectations
 				s.timeModule.EXPECT().Now().Return(nowTime).Times(2)
 
+				// Add cache manager expectations
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, nil)
+
 				s.employeePositionRepo.EXPECT().
 					GetCurrentByEmployeeID(gomock.Any(), s.db, employeeID, nowTime).
 					Return(employeePosition, nil)
@@ -118,16 +134,21 @@ func TestCreate(t *testing.T) {
 					UpdateForClockOut(gomock.Any(), s.db, attendanceID, nowTime).
 					Return(updatedAttendance, nil)
 
-				// Expected response
-				expectedResponse := CreateResponse{
+				// Expected response for cache
+				expectedResponse := dtos.AttendanceV1Response{
 					AttendanceID: attendanceID,
 					PositionID:   positionID,
 					ClockInTime:  "2023-06-15 01:00:00",
 					ClockOutTime: "2023-06-15 09:00:00",
 				}
 
+				// Expect cache set call
+				s.cacheManager.EXPECT().
+					SetAttendanceV1(gomock.Any(), employeeID, expectedResponse, gomock.Any()).
+					Return(nil)
+
 				// Make the request and verify response
-				var actualResponse CreateResponse
+				var actualResponse dtos.AttendanceV1Response
 				s.testServer.MustDoAndMatchCode(
 					t,
 					http.MethodPost,
@@ -149,6 +170,10 @@ func TestCreate(t *testing.T) {
 				// Set up expectations for failure
 				s.timeModule.EXPECT().Now().Return(nowTime)
 
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, nil)
+
 				s.employeePositionRepo.EXPECT().
 					GetCurrentByEmployeeID(gomock.Any(), s.db, employeeID, nowTime).
 					Return(nil, nil)
@@ -161,16 +186,20 @@ func TestCreate(t *testing.T) {
 					"/attendance",
 					req,
 					&errorResponse,
-					http.StatusNotFound,
+					http.StatusInternalServerError,
 				)
 
 				Convey("Then the response should indicate position not found", func() {
-					So(errorResponse["error"], ShouldEqual, "employee position not found")
+					So(errorResponse["error"], ShouldEqual, "failed to get employee position")
 				})
 			})
 
 			Convey("When getting position fails", func() {
 				// Set up expectations for failure
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, errors.New("cache error"))
+
 				s.timeModule.EXPECT().Now().Return(nowTime)
 
 				s.employeePositionRepo.EXPECT().
@@ -197,6 +226,10 @@ func TestCreate(t *testing.T) {
 				// Set up expectations for failure
 				s.timeModule.EXPECT().Now().Return(nowTime)
 
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, nil)
+
 				s.employeePositionRepo.EXPECT().
 					GetCurrentByEmployeeID(gomock.Any(), s.db, employeeID, nowTime).
 					Return(employeePosition, nil)
@@ -217,13 +250,17 @@ func TestCreate(t *testing.T) {
 				)
 
 				Convey("Then the response should indicate a server error", func() {
-					So(errorResponse["error"], ShouldEqual, "failed to get last attendance")
+					So(errorResponse["error"], ShouldEqual, "failed to get employee attendance")
 				})
 			})
 
 			Convey("When creating a new attendance record fails", func() {
 				// Set up expectations for failure
 				s.timeModule.EXPECT().Now().Return(nowTime).Times(2)
+
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, nil)
 
 				s.employeePositionRepo.EXPECT().
 					GetCurrentByEmployeeID(gomock.Any(), s.db, employeeID, nowTime).
@@ -249,7 +286,7 @@ func TestCreate(t *testing.T) {
 				)
 
 				Convey("Then the response should indicate a server error", func() {
-					So(errorResponse["error"], ShouldEqual, "failed to create attendance")
+					So(errorResponse["error"], ShouldEqual, "failed to create/update attendance")
 				})
 			})
 
@@ -265,6 +302,10 @@ func TestCreate(t *testing.T) {
 
 				// Set up expectations for failure during update
 				s.timeModule.EXPECT().Now().Return(nowTime).Times(2)
+
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, nil)
 
 				s.employeePositionRepo.EXPECT().
 					GetCurrentByEmployeeID(gomock.Any(), s.db, employeeID, nowTime).
@@ -290,7 +331,65 @@ func TestCreate(t *testing.T) {
 				)
 
 				Convey("Then the response should indicate a server error", func() {
-					So(errorResponse["error"], ShouldEqual, "failed to update attendance")
+					So(errorResponse["error"], ShouldEqual, "failed to create/update attendance")
+				})
+			})
+
+			Convey("When setting attendance to cache fails", func() {
+				// New attendance record for clock-in
+				newAttendance := &models.EmployeeAttendance{
+					ID:         attendanceID,
+					EmployeeID: employeeID,
+					PositionID: positionID,
+					ClockIn:    nowTime,
+				}
+
+				// Set up expectations
+				s.timeModule.EXPECT().Now().Return(nowTime).Times(2)
+
+				s.cacheManager.EXPECT().
+					GetEmployeeDetailV1(gomock.Any(), employeeID).
+					Return(nil, nil)
+
+				s.employeePositionRepo.EXPECT().
+					GetCurrentByEmployeeID(gomock.Any(), s.db, employeeID, nowTime).
+					Return(employeePosition, nil)
+
+				s.employeeAttendanceRepo.EXPECT().
+					Last(gomock.Any(), s.db, employeeID).
+					Return(nil, nil)
+
+				s.employeeAttendanceRepo.EXPECT().
+					CreateForClockIn(gomock.Any(), s.db, employeeID, positionID, nowTime).
+					Return(newAttendance, nil)
+
+				expectedResponse := dtos.AttendanceV1Response{
+					AttendanceID: attendanceID,
+					PositionID:   positionID,
+					ClockInTime:  "2023-06-15 09:00:00",
+					ClockOutTime: "",
+				}
+
+				// Expect cache set to fail but API should still succeed
+				s.cacheManager.EXPECT().
+					SetAttendanceV1(gomock.Any(), employeeID, expectedResponse, gomock.Any()).
+					Return(errors.New("cache error"))
+
+				var actualResponse dtos.AttendanceV1Response
+				s.testServer.MustDoAndMatchCode(
+					t,
+					http.MethodPost,
+					"/attendance",
+					req,
+					&actualResponse,
+					http.StatusCreated,
+				)
+
+				Convey("Then the API should still succeed even if caching fails", func() {
+					So(actualResponse.AttendanceID, ShouldEqual, expectedResponse.AttendanceID)
+					So(actualResponse.PositionID, ShouldEqual, expectedResponse.PositionID)
+					So(actualResponse.ClockInTime, ShouldEqual, expectedResponse.ClockInTime)
+					So(actualResponse.ClockOutTime, ShouldEqual, expectedResponse.ClockOutTime)
 				})
 			})
 		})

@@ -108,11 +108,25 @@ func main() {
 	// Initialize the controllers
 
 	employeeCtrlCfg := employee.Config{}
-	employeeCtrl := employee.NewController(employeeCtrlCfg, db, timeModule, employeeInfoRepo, employeePositionRepo, cacheManager)
+	employeeCtrl := employee.NewController(
+		employeeCtrlCfg,
+		db,
+		timeModule,
+		employeeInfoRepo,
+		employeePositionRepo,
+		cacheManager,
+	)
 	employeeCtrl.RegisterRoutes(r)
 
 	attendanceCtrlCfg := attendance.Config{}
-	attendanceCtrl := attendance.NewController(attendanceCtrlCfg, db, timeModule, employeePositionRepo, employeeAttendanceRepo)
+	attendanceCtrl := attendance.NewController(
+		attendanceCtrlCfg,
+		db,
+		timeModule,
+		employeePositionRepo,
+		employeeAttendanceRepo,
+		cacheManager,
+	)
 	attendanceCtrl.RegisterRoutes(r)
 
 	////////////////////////////////////////////////////////////////////////////

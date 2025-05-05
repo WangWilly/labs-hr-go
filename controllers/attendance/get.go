@@ -1,21 +1,16 @@
 package attendance
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/WangWilly/labs-hr-go/pkgs/dtos"
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
-
-type GetResponse struct {
-	AttendanceID int64  `json:"attendance_id"`
-	PositionID   int64  `json:"position_id"`
-	ClockInTime  string `json:"clock_in_time"`
-	ClockOutTime string `json:"clock_out_time"`
-}
 
 func (c *Controller) Get(ctx *gin.Context) {
 	employeeID, ok := ctx.Params.Get("employee_id")
@@ -32,16 +27,17 @@ func (c *Controller) Get(ctx *gin.Context) {
 
 	////////////////////////////////////////////////////////////////////////////
 
-	// Get the current position of the employee
-	employeePosition, err := c.employeePositionRepo.GetCurrentByEmployeeID(ctx, c.db, employeeIDInt, c.timeModule.Now())
+	cached, err := c.cacheManage.GetAttendanceV1(ctx, employeeIDInt)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get employee position"})
+		fmt.Println("failed to get attendance from cache:", err)
+	}
+	if cached != nil {
+		fmt.Println("cache hit")
+		ctx.JSON(http.StatusOK, cached)
 		return
 	}
-	if employeePosition == nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "employee position not found"})
-		return
-	}
+
+	////////////////////////////////////////////////////////////////////////////
 
 	// Get the last attendance record of the employee
 	currAttendance, err := c.employeeAttendanceRepo.Last(ctx, c.db, employeeIDInt)
@@ -61,11 +57,18 @@ func (c *Controller) Get(ctx *gin.Context) {
 	}
 
 	////////////////////////////////////////////////////////////////////////////
-	// Return the attendance record
-	ctx.JSON(http.StatusOK, GetResponse{
+	resp := dtos.AttendanceV1Response{
 		AttendanceID: currAttendance.ID,
 		PositionID:   currAttendance.PositionID,
 		ClockInTime:  utils.FormatedTime(currAttendance.ClockIn),
 		ClockOutTime: clockOutTime,
-	})
+	}
+
+	// Cache the attendance record
+	if err := c.cacheManage.SetAttendanceV1(ctx, employeeIDInt, resp, 0); err != nil {
+		fmt.Println("failed to set attendance to cache:", err)
+	}
+
+	// Return the attendance record
+	ctx.JSON(http.StatusOK, resp)
 }
