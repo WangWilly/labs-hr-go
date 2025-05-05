@@ -1,5 +1,28 @@
 # Labs-HR-Go
 
+## Table of Contents
+- [Installation](#installation)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+  - [Docker Setup](#docker-setup)
+- [Migrations](#migrations)
+  - [Prerequisites](#prerequisites-1)
+  - [Local Database Setup](#local-database-setup)
+  - [Creating Migrations](#creating-migrations)
+  - [Running Migrations](#running-migrations)
+  - [Migration Best Practices](#migration-best-practices)
+  - [Troubleshooting](#troubleshooting)
+  - [References](#references)
+- [API Documentation](#api-documentation)
+  - [Employee Endpoints](#employee-endpoints)
+  - [Attendance Endpoints](#attendance-endpoints)
+- [All Environment Variables](#all-environment-variables)
+  - [Server Configuration](#server-configuration)
+  - [Database Configuration](#database-configuration)
+  - [Application Features](#application-features)
+  - [Usage Examples](#usage-examples)
+- [Development Resources](#development-resources)
+
 ## Installation
 
 ### Prerequisites
@@ -315,28 +338,6 @@ Error Responses:
 - 404 Not Found: Employee not found
 - 500 Internal Server Error: Clock-in operation failed
 
-#### Get Attendance Record
-
-Retrieves an attendance record by ID.
-
-```bash
-curl --location 'http://localhost:8080/attendance/1'
-```
-
-Response (200 OK):
-```json
-{
-    "attendance_id": 1,
-    "position_id": 3,
-    "clock_in_time": "2025-05-04 13:41:15",
-    "clock_out_time": "2025-05-04 13:41:15"
-}
-```
-
-Error Responses:
-- 400 Bad Request: Invalid ID format
-- 404 Not Found: Attendance record not found
-
 #### Clock Out
 
 Records when an employee ends their workday.
@@ -361,40 +362,27 @@ Error Responses:
 - 404 Not Found: Attendance record not found
 - 500 Internal Server Error: Clock-out operation failed
 
-#### Get Employee Attendance History
+#### Get Attendance Record
 
-Retrieves attendance history for a specific employee.
+Retrieves an attendance record by ID.
 
 ```bash
-curl --location 'http://localhost:8080/employee/1/attendance'
+curl --location 'http://localhost:8080/attendance/1'
 ```
 
 Response (200 OK):
 ```json
 {
-    "employee_id": 1,
-    "records": [
-        {
-            "attendance_id": 1,
-            "position_id": 3,
-            "clock_in_time": "2025-05-04 13:41:15",
-            "clock_out_time": "2025-05-04 17:30:22",
-            "total_hours": 3.82
-        },
-        {
-            "attendance_id": 2,
-            "position_id": 3,
-            "clock_in_time": "2025-05-05 09:02:10",
-            "clock_out_time": "2025-05-05 18:15:42",
-            "total_hours": 9.23
-        }
-    ]
+    "attendance_id": 1,
+    "position_id": 3,
+    "clock_in_time": "2025-05-04 13:41:15",
+    "clock_out_time": "2025-05-04 17:30:22"
 }
 ```
 
 Error Responses:
-- 400 Bad Request: Invalid employee ID format
-- 404 Not Found: Employee not found
+- 400 Bad Request: Invalid ID format
+- 404 Not Found: Attendance record not found
 
 ## All Environment Variables
 
