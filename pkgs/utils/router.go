@@ -7,10 +7,8 @@ import (
 )
 
 func GetDefaultRouter() *gin.Engine {
-	router := gin.Default()
-
-	// router.Use(gin.Recovery())
-	// router.Use(gin.Logger())
+	router := gin.New()
+	router.Use(gin.Recovery())
 
 	// https://stackoverflow.com/questions/32443738/setting-up-route-not-found-in-gin
 	router.NoRoute(func(c *gin.Context) {

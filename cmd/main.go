@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +12,7 @@ import (
 	"github.com/WangWilly/labs-hr-go/controllers/employee"
 	"github.com/WangWilly/labs-hr-go/database/migrations"
 	"github.com/WangWilly/labs-hr-go/pkgs/cachemanager"
+	"github.com/WangWilly/labs-hr-go/pkgs/middleware"
 	"github.com/WangWilly/labs-hr-go/pkgs/repos/employeeattendancerepo"
 	"github.com/WangWilly/labs-hr-go/pkgs/repos/employeeinforepo"
 	"github.com/WangWilly/labs-hr-go/pkgs/repos/employeepositionrepo"
@@ -41,47 +41,54 @@ type envConfig struct {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+func init() {
+	ctx := context.Background()
+	utils.InitLogging(ctx)
+}
+
 func main() {
 	ctx := context.Background()
+	logger := utils.GetDetailedLogger().With().Caller().Logger()
 
 	// Load environment variables
 	cfg := &envConfig{}
 	err := envconfig.Process(ctx, cfg)
 	if err != nil {
-		panic(err)
+		logger.Fatal().Err(err).Msg("Failed to load environment variables")
 	}
 
 	////////////////////////////////////////////////////////////////////////////
 	// Initialize Gin router
 
 	r := utils.GetDefaultRouter()
+	r.Use(middleware.LoggingMiddleware())
 
 	////////////////////////////////////////////////////////////////////////////
 	// Setup database
 
 	db, err := utils.GetDB(cfg.DbCfg)
 	if err != nil {
-		panic(err)
+		logger.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 	sqlDB, err := db.DB()
 	if err != nil {
-		panic(err)
+		logger.Fatal().Err(err).Msg("Failed to get sqlDB from db")
 	}
 
 	if cfg.DbMigrate {
 		if err := migrations.Apply(db); err != nil {
-			panic(err)
+			logger.Fatal().Err(err).Msg("Failed to apply database migrations")
 		}
-		fmt.Println("Database migration completed successfully!")
+		logger.Info().Msg("Database migrations applied successfully")
 	}
 
 	// Seed the database if DB_SEED is true
 	if cfg.DbSeed {
-		fmt.Println("Seeding database with dummy data...")
+		logger.Info().Msg("Seeding database with dummy data...")
 		if err := seed.SeedData(ctx, db); err != nil {
-			panic(fmt.Errorf("failed to seed database: %w", err))
+			logger.Fatal().Err(err).Msg("Failed to seed database")
 		}
-		fmt.Println("Database seeded successfully!")
+		logger.Info().Msg("Database seeded successfully")
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -89,9 +96,9 @@ func main() {
 
 	redisClient, err := utils.GetRedis(ctx, cfg.RedisCfg)
 	if err != nil {
-		panic(fmt.Errorf("failed to create Redis client: %w", err))
+		logger.Fatal().Err(err).Msg("Failed to connect to Redis")
 	}
-	fmt.Println("Redis client created successfully!")
+	logger.Info().Msg("Redis client created successfully!")
 
 	////////////////////////////////////////////////////////////////////////////
 	// Initialize modules
@@ -138,7 +145,7 @@ func main() {
 	// Start the server in a goroutine
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			panic(err)
+			logger.Fatal().Err(err).Msg("Failed to start server")
 		}
 	}()
 
@@ -153,31 +160,31 @@ func main() {
 	<-quit
 
 	// Log shutdown message
-	fmt.Println("Received shutdown signal, shutting down server...")
+	logger.Info().Msg("Received shutdown signal, shutting down server...")
 	// Create a deadline to wait for
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// Shutdown the server gracefully
 	if err := redisClient.Close(); err != nil {
-		panic(fmt.Errorf("failed to close Redis client: %w", err))
+		logger.Fatal().Err(err).Msg("Failed to close Redis client")
 	}
-	fmt.Println("Redis client closed successfully!")
+	logger.Info().Msg("Redis client closed successfully!")
 
 	// Close the database connection
 	if err := sqlDB.Close(); err != nil {
-		panic(fmt.Errorf("failed to close database connection: %w", err))
+		logger.Fatal().Err(err).Msg("Failed to close database connection")
 	}
-	fmt.Println("Database connection closed successfully!")
+	logger.Info().Msg("Database connection closed successfully!")
 
 	// Gracefully shutdown the server
-	fmt.Println("Shutdown HTTP Server ...")
+	logger.Info().Msg("Shutting down server...")
 	if err := srv.Shutdown(ctx); err != nil {
 		// Handle shutdown error
-		panic(err)
+		logger.Fatal().Err(err).Msg("Failed to shutdown server")
 	}
 
 	// Wait for tasks to finish or timeout
 	<-ctx.Done()
-	fmt.Println("Server shutdown complete.")
+	logger.Info().Msg("Server shutdown complete.")
 }

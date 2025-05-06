@@ -1,11 +1,11 @@
 package employee
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -28,6 +28,8 @@ type UpdateResponse struct {
 }
 
 func (c *Controller) Update(ctx *gin.Context) {
+	logger := log.Ctx(ctx.Request.Context())
+
 	var req UpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -76,7 +78,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 	// Update the cache
 	employeeDetail, err := c.cacheManager.GetEmployeeDetailV1(ctx, employeeID)
 	if err != nil {
-		fmt.Println("cache error:", err)
+		logger.Error().Err(err).Msg("Failed to get employee detail from cache")
 	}
 	if err == nil && employeeDetail != nil {
 		employeeDetail.Name = employeeInfo.Name
@@ -86,7 +88,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 		employeeDetail.Email = employeeInfo.Email
 
 		if err := c.cacheManager.SetEmployeeDetailV1(ctx, employeeID, *employeeDetail, 0); err != nil {
-			fmt.Println("cache error:", err)
+			logger.Error().Err(err).Msg("Failed to cache employee detail")
 		}
 	}
 

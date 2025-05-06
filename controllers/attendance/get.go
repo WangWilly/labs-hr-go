@@ -1,18 +1,20 @@
 package attendance
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/WangWilly/labs-hr-go/pkgs/dtos"
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
 
 func (c *Controller) Get(ctx *gin.Context) {
+	logger := log.Ctx(ctx.Request.Context())
+
 	employeeID, ok := ctx.Params.Get("employee_id")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid employee id"})
@@ -29,10 +31,10 @@ func (c *Controller) Get(ctx *gin.Context) {
 
 	cached, err := c.cacheManager.GetAttendanceV1(ctx, employeeIDInt)
 	if err != nil {
-		fmt.Println("failed to get attendance from cache:", err)
+		logger.Error().Err(err).Msg("Failed to get attendance from cache")
 	}
 	if cached != nil {
-		fmt.Println("cache hit")
+		logger.Info().Msg("Cache hit")
 		ctx.JSON(http.StatusOK, cached)
 		return
 	}
@@ -66,7 +68,7 @@ func (c *Controller) Get(ctx *gin.Context) {
 
 	// Cache the attendance record
 	if err := c.cacheManager.SetAttendanceV1(ctx, employeeIDInt, resp, 0); err != nil {
-		fmt.Println("failed to set attendance to cache:", err)
+		logger.Error().Err(err).Msg("Failed to set attendance to cache")
 	}
 
 	// Return the attendance record

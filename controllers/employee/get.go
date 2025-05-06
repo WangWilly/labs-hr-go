@@ -1,17 +1,19 @@
 package employee
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/WangWilly/labs-hr-go/pkgs/dtos"
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
 
 func (c *Controller) Get(ctx *gin.Context) {
+	logger := log.Ctx(ctx.Request.Context())
+
 	id, ok := ctx.Params.Get("id")
 	if !ok {
 		ctx.JSON(400, gin.H{"error": "invalid id"})
@@ -29,10 +31,10 @@ func (c *Controller) Get(ctx *gin.Context) {
 	// Check if the employee detail is in cache
 	cacheData, err := c.cacheManager.GetEmployeeDetailV1(ctx, employeeID)
 	if err != nil {
-		fmt.Println("cache error:", err)
+		logger.Error().Err(err).Msg("Failed to get employee detail from cache")
 	}
 	if err == nil && cacheData != nil {
-		fmt.Println("cache hit")
+		logger.Info().Msg("Cache hit")
 		ctx.JSON(200, cacheData)
 		return
 	}
@@ -73,7 +75,7 @@ func (c *Controller) Get(ctx *gin.Context) {
 
 	// Cache the employee detail
 	if err := c.cacheManager.SetEmployeeDetailV1(ctx, employeeID, *response, 0); err != nil {
-		fmt.Println("cache set error:", err)
+		logger.Error().Err(err).Msg("Failed to cache employee detail")
 	}
 
 	ctx.JSON(200, response)

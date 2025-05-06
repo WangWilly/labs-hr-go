@@ -114,8 +114,6 @@ func NewDatabase() (*DockerTestDatabaseInstance, error) {
 	dbCfg.Host = host
 	dbCfg.Port = port
 
-	fmt.Printf("Waiting for database to be ready on %s:%s...\n", host, port)
-
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	pool.MaxWait = 120 * time.Second
 	var gormDB *gorm.DB
@@ -163,7 +161,6 @@ func GetDB() *DockerTestDatabaseInstance {
 ////////////////////////////////////////////////////////////////////////////////
 
 func BeforeTestDb(m *testing.M) {
-	fmt.Println("BeforeTestDb")
 	dbInstance = MustNewDatabase()
 
 	code := m.Run()

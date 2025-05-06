@@ -2,11 +2,11 @@ package tasks
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 	"time"
 
 	"github.com/WangWilly/labs-hr-go/pkgs/cmd"
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/WangWilly/labs-hr-go/pkgs/uuid"
 )
 
@@ -128,23 +128,25 @@ func (t *DownloadTask) GetMaxTimeout() time.Duration {
 ////////////////////////////////////////////////////////////////////////////////
 
 func (t *DownloadTask) execute(c cmd.Cmd) bool {
+	logger := utils.GetDetailedLogger().With().Caller().Logger()
+
 	// Execute
 	if err := c.Run(); err != nil {
 		t.progress = -1
 		if t.ctx.Err() == context.Canceled {
-			fmt.Printf("Download canceled: %s\n", t.filePath)
+			logger.Error().Err(err).Msg("Download canceled")
 		} else {
 			if t.retries < t.maxRetries {
 				t.progress = -2
 			}
-			fmt.Printf("Error executing command: %v\n", err)
+			logger.Error().Err(err).Msg("Download failed")
 		}
 		return false
 	}
 	t.progress = 100
 
 	// Cleanup
-	fmt.Printf("Download complete: %s\n", t.filePath)
+	logger.Info().Msgf("Download complete: %s", t.filePath)
 	return true
 }
 
@@ -172,27 +174,30 @@ func (t *DownloadTask) Execute() bool {
 }
 
 func (t *DownloadTask) SetRetrySignal() <-chan struct{} {
+	logger := utils.GetDetailedLogger().With().Caller().Logger()
+
 	go func() {
 		if t.retries >= t.maxRetries {
-			fmt.Printf("Max retries reached for: %s\n", t.filePath)
+			logger.Error().Msgf("Max retries reached for: %s", t.filePath)
 			return
 		}
 
 		time.Sleep(t.retryDelay)
 		t.retries++
-		fmt.Printf("Retrying download: %s, attempt: %d\n", t.filePath, t.retries)
+		logger.Warn().Msgf("Retrying download: %s, attempt: %d", t.filePath, t.retries)
 		t.retryChannel <- struct{}{}
 	}()
 
 	if t.retries >= t.maxRetries {
-		fmt.Printf("Max retries reached for: %s\n", t.filePath)
+		logger.Error().Msgf("Max retries reached for: %s", t.filePath)
 		return nil
 	}
 	return t.retryChannel
 }
 
 func (t *DownloadTask) Cancel() {
-	fmt.Printf("Canceling download: %s, ", t.filePath)
-	fmt.Printf("Canceling task: %s\n", t.taskID)
+	logger := utils.GetDetailedLogger().With().Caller().Logger()
+	logger.Error().Msgf("Canceling download: %s, ", t.filePath)
+	logger.Error().Msgf("Canceling task: %s\n", t.taskID)
 	t.cancel()
 }

@@ -1,7 +1,6 @@
 package employee
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/WangWilly/labs-hr-go/pkgs/models"
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -34,6 +34,8 @@ type CreateResponse struct {
 ////////////////////////////////////////////////////////////////////////////////
 
 func (c *Controller) Create(ctx *gin.Context) {
+	logger := log.Ctx(ctx.Request.Context())
+
 	var req CreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -89,7 +91,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 		StartDate:  utils.FormatedTime(employeePosition.StartDate),
 	}
 	if err := c.cacheManager.SetEmployeeDetailV1(ctx, employeeInfo.ID, employeeDetail, 0); err != nil {
-		fmt.Printf("failed to cache employee detail: %v\n", err)
+		logger.Error().Err(err).Msg("Failed to cache employee detail")
 	}
 
 	ctx.JSON(http.StatusCreated, CreateResponse{

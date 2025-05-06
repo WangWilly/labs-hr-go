@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sync"
+
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -87,25 +89,27 @@ func (p *TaskPool) createWorker() {
 	p.wg.Add(1)
 	defer p.wg.Done()
 
+	logger := utils.GetDetailedLogger().With().Caller().Logger()
+
 	for {
 		select {
 		case <-p.ctx.Done():
 			return
 		case task, ok := <-p.tasks:
 			if !ok {
-				fmt.Println("Task channel closed, exiting worker")
+				logger.Info().Msg("Task channel closed, exiting worker")
 				return
 			}
 			done := task.Execute()
 			if done {
-				fmt.Println("Task completed successfully")
+				logger.Info().Msgf("Task %s completed successfully", task.GetID())
 				continue
 			}
 
-			fmt.Println("Task failed, retrying...")
+			logger.Warn().Msgf("Task %s failed, retrying...", task.GetID())
 			sig := task.SetRetrySignal()
 			if sig == nil {
-				fmt.Println("Task retry signal is nil, skipping retry")
+				logger.Warn().Msgf("Task %s retry signal is nil, skipping retry", task.GetID())
 				continue
 			}
 			go func() {

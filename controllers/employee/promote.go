@@ -1,13 +1,13 @@
 package employee
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/WangWilly/labs-hr-go/pkgs/models"
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,6 +25,8 @@ type PromoteResponse struct {
 }
 
 func (c *Controller) Promote(ctx *gin.Context) {
+	logger := log.Ctx(ctx.Request.Context())
+
 	id, ok := ctx.Params.Get("id")
 	if !ok {
 		ctx.JSON(400, gin.H{"error": "invalid id"})
@@ -61,7 +63,7 @@ func (c *Controller) Promote(ctx *gin.Context) {
 	////////////////////////////////////////////////////////////////////////////
 
 	if err := c.cacheManager.DeleteEmployeeDetailV1(ctx, employeeID); err != nil {
-		fmt.Fprintln(ctx.Writer, "failed to delete cache:", err)
+		logger.Error().Err(err).Msg("Failed to delete employee detail cache")
 	}
 
 	response := PromoteResponse{

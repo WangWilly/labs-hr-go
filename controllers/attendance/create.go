@@ -8,6 +8,7 @@ import (
 	"github.com/WangWilly/labs-hr-go/pkgs/models"
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,6 +20,8 @@ type CreateRequest struct {
 ////////////////////////////////////////////////////////////////////////////////
 
 func (c *Controller) Create(ctx *gin.Context) {
+	logger := log.Ctx(ctx.Request.Context())
+
 	var req CreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -51,7 +54,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 	}
 	// Cache the attendance record
 	if err := c.cacheManager.SetAttendanceV1(ctx, req.EmployeeID, *attendanceResponse, 0); err != nil {
-		fmt.Println("failed to cache attendance:", err)
+		logger.Error().Err(err).Msg("Failed to cache attendance")
 	}
 
 	ctx.JSON(http.StatusCreated, attendanceResponse)
@@ -60,13 +63,15 @@ func (c *Controller) Create(ctx *gin.Context) {
 ////////////////////////////////////////////////////////////////////////////////
 
 func (c *Controller) getEmployeePosition(ctx *gin.Context, employeeID int64) (int64, error) {
+	logger := log.Ctx(ctx.Request.Context())
+
 	if employeeID <= 0 {
 		return 0, fmt.Errorf("invalid employee ID")
 	}
 
 	employeePosition, err := c.cacheManager.GetEmployeeDetailV1(ctx, employeeID)
 	if err != nil {
-		fmt.Println("failed to get employee position from cache:", err)
+		logger.Error().Err(err).Msg("Failed to get employee position from cache")
 	}
 	if employeePosition != nil {
 		return employeePosition.PositionID, nil
