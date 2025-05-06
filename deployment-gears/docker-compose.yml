@@ -13,7 +13,7 @@ services:
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping"]
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       interval: 10s
       timeout: 60s
       retries: 10
@@ -21,6 +21,8 @@ services:
   redis:
     image: redis:7.4.3-alpine
     restart: always
+    volumes:
+      - './storage/redis:/data'
     ports:
       - "6379:6379"
     healthcheck:
