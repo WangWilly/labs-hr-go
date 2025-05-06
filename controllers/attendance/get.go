@@ -27,7 +27,7 @@ func (c *Controller) Get(ctx *gin.Context) {
 
 	////////////////////////////////////////////////////////////////////////////
 
-	cached, err := c.cacheManage.GetAttendanceV1(ctx, employeeIDInt)
+	cached, err := c.cacheManager.GetAttendanceV1(ctx, employeeIDInt)
 	if err != nil {
 		fmt.Println("failed to get attendance from cache:", err)
 	}
@@ -65,7 +65,7 @@ func (c *Controller) Get(ctx *gin.Context) {
 	}
 
 	// Cache the attendance record
-	if err := c.cacheManage.SetAttendanceV1(ctx, employeeIDInt, resp, 0); err != nil {
+	if err := c.cacheManager.SetAttendanceV1(ctx, employeeIDInt, resp, 0); err != nil {
 		fmt.Println("failed to set attendance to cache:", err)
 	}
 

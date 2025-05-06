@@ -425,3 +425,4 @@ When using Docker Compose, configure these variables in the `deployments/docker-
 - [Go Modules Documentation](https://go.dev/wiki/Modules#quick-start)
 - https://github.com/smartystreets/goconvey
 - https://github.com/uber-go/mock
+- https://github.com/rs/zerolog?tab=readme-ov-file#benchmarks

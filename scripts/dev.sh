@@ -2,6 +2,7 @@
 
 
 export DB_SEED=true
+export DB_IS_DEV=false
 # This script is used to run the dev server for the project.
 # It sets up the environment and starts the server.
 # Usage: ./scripts/dev.sh

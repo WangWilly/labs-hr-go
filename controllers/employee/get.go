@@ -4,28 +4,10 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/WangWilly/labs-hr-go/pkgs/dtos"
 	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/gin-gonic/gin"
 )
-
-////////////////////////////////////////////////////////////////////////////////
-
-type GetResponse struct {
-	EmployeeID int64  `json:"employee_id"`
-	Name       string `json:"name"`
-	Age        int    `json:"age"`
-	Phone      string `json:"phone"`
-	Email      string `json:"email"`
-	Address    string `json:"address"`
-	CreatedAt  string `json:"created_at"`
-	UpdatedAt  string `json:"updated_at"`
-
-	PositionID int64   `json:"position_id"`
-	Position   string  `json:"position"`
-	Department string  `json:"department"`
-	Salary     float64 `json:"salary"`
-	StartDate  string  `json:"start_date"`
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -72,7 +54,7 @@ func (c *Controller) Get(ctx *gin.Context) {
 
 	////////////////////////////////////////////////////////////////////////////
 
-	response := GetResponse{
+	response := &dtos.EmployeeV1Response{
 		EmployeeID: employeeInfo.ID,
 		Name:       employeeInfo.Name,
 		Age:        employeeInfo.Age,
@@ -88,5 +70,11 @@ func (c *Controller) Get(ctx *gin.Context) {
 		Salary:     employeePosition.Salary,
 		StartDate:  utils.FormatedTime(employeePosition.StartDate),
 	}
+
+	// Cache the employee detail
+	if err := c.cacheManager.SetEmployeeDetailV1(ctx, employeeID, *response, 0); err != nil {
+		fmt.Println("cache set error:", err)
+	}
+
 	ctx.JSON(200, response)
 }

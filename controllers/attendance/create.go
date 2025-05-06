@@ -50,7 +50,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 		return
 	}
 	// Cache the attendance record
-	if err := c.cacheManage.SetAttendanceV1(ctx, req.EmployeeID, *attendanceResponse, 0); err != nil {
+	if err := c.cacheManager.SetAttendanceV1(ctx, req.EmployeeID, *attendanceResponse, 0); err != nil {
 		fmt.Println("failed to cache attendance:", err)
 	}
 
@@ -64,7 +64,7 @@ func (c *Controller) getEmployeePosition(ctx *gin.Context, employeeID int64) (in
 		return 0, fmt.Errorf("invalid employee ID")
 	}
 
-	employeePosition, err := c.cacheManage.GetEmployeeDetailV1(ctx, employeeID)
+	employeePosition, err := c.cacheManager.GetEmployeeDetailV1(ctx, employeeID)
 	if err != nil {
 		fmt.Println("failed to get employee position from cache:", err)
 	}

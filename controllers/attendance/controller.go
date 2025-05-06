@@ -17,7 +17,7 @@ type Controller struct {
 	timeModule             TimeModule
 	employeePositionRepo   EmployeePositionRepo
 	employeeAttendanceRepo EmployeeAttendanceRepo
-	cacheManage            CacheManager
+	cacheManager           CacheManager
 }
 
 func NewController(
@@ -34,7 +34,7 @@ func NewController(
 		timeModule:             timeModule,
 		employeePositionRepo:   employeePositionRepo,
 		employeeAttendanceRepo: employeeAttendanceRepo,
-		cacheManage:            cacheManage,
+		cacheManager:           cacheManage,
 	}
 }
 

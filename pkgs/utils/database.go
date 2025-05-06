@@ -24,7 +24,7 @@ type DbConfig struct {
 	Timezone string `env:"DB_TIMEZONE,default=UTC"`
 
 	SlowThreshold time.Duration `env:"DB_SLOW_THRESHOLD,default=200ms"`
-	IsDev         bool          `env:"DB_IS_DEV,default=true"`
+	IsDev         bool          `env:"DB_IS_DEV,default=false"`
 
 	MaxIdleConns    int           `env:"DB_MAX_IDLE_CONNS,default=10"`
 	MaxOpenConns    int           `env:"DB_MAX_OPEN_CONNS,default=100"`

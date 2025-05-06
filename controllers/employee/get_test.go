@@ -41,7 +41,7 @@ func TestGet(t *testing.T) {
 			}
 
 			// Expected response data structure
-			expectedResponse := GetResponse{
+			expectedResponse := dtos.EmployeeV1Response{
 				EmployeeID: employeeInfo.ID,
 				Name:       employeeInfo.Name,
 				Age:        employeeInfo.Age,
@@ -82,7 +82,7 @@ func TestGet(t *testing.T) {
 				// No repository calls expected when cache hits
 
 				// Make the request and verify response
-				var actualResponse GetResponse
+				var actualResponse dtos.EmployeeV1Response
 				s.testServer.MustDoAndMatchCode(
 					t,
 					http.MethodGet,
@@ -109,7 +109,7 @@ func TestGet(t *testing.T) {
 				})
 			})
 
-			Convey("When retrieving the employee by ID and cache misses", func() {
+			Convey("When retrieving the employee by ID and cache misses", func(c C) {
 				// Set up cache miss expectation
 				s.cacheManager.EXPECT().
 					GetEmployeeDetailV1(gomock.Any(), employeeID).
@@ -125,8 +125,19 @@ func TestGet(t *testing.T) {
 					GetCurrentByEmployeeID(gomock.Any(), s.db, employeeID, nowTime).
 					Return(employeePosition, nil)
 
+					// Add expectation that the employee details are cached before returning
+				s.cacheManager.EXPECT().
+					SetEmployeeDetailV1(gomock.Any(), employeeID, gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ interface{}, _ int64, resp dtos.EmployeeV1Response, _ interface{}) error {
+						// Verify the cached data matches what we expect
+						c.So(resp.EmployeeID, ShouldEqual, expectedResponse.EmployeeID)
+						c.So(resp.Name, ShouldEqual, expectedResponse.Name)
+						c.So(resp.PositionID, ShouldEqual, expectedResponse.PositionID)
+						return nil
+					})
+
 				// Make the request and verify response
-				var actualResponse GetResponse
+				var actualResponse dtos.EmployeeV1Response
 				s.testServer.MustDoAndMatchCode(
 					t,
 					http.MethodGet,
