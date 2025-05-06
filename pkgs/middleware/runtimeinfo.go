@@ -85,8 +85,7 @@ func LoggingMiddleware() gin.HandlerFunc {
 		////////////////////////////////////////////////////////////////////////
 		// Log request details
 
-		detailedLogger := utils.GetDetailedLogger().With().Logger()
-		detailedLogger.Info().
+		detailedLogger := utils.GetDetailedLogger().With().
 			Str("url", ginCtx.Request.URL.String()).
 			Str("method", ginCtx.Request.Method).
 			Str("request_id", ginCtx.Request.Header.Get(utils.RequestIdHeader)).
@@ -95,6 +94,14 @@ func LoggingMiddleware() gin.HandlerFunc {
 			Str("referer", ginCtx.Request.Referer()).
 			Str("session_id", ginCtx.Request.Header.Get(utils.SessionIdHeader)).
 			Str("latency", toc.String()).
-			Msg(fmt.Sprintf("Request %s %s", ginCtx.Request.Method, ginCtx.Request.URL.String()))
+			Logger()
+
+		if ginCtx.Writer.Status() >= 400 {
+			detailedLogger.Error().Msg(fmt.Sprintf("%s %s %d", ginCtx.Request.Method, ginCtx.Request.URL.String(), ginCtx.Writer.Status()))
+		} else if ginCtx.Writer.Status() >= 200 {
+			detailedLogger.Info().Msg(fmt.Sprintf("%s %s %d", ginCtx.Request.Method, ginCtx.Request.URL.String(), ginCtx.Writer.Status()))
+		} else {
+			detailedLogger.Debug().Msg(fmt.Sprintf("%s %s %d", ginCtx.Request.Method, ginCtx.Request.URL.String(), ginCtx.Writer.Status()))
+		}
 	}
 }

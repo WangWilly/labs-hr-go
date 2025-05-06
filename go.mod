@@ -2,7 +2,10 @@ module github.com/WangWilly/labs-hr-go
 
 go 1.24
 
-require github.com/gin-gonic/gin v1.10.0
+require (
+	github.com/gin-gonic/gin v1.10.0
+	github.com/rs/xid v1.6.0
+)
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -26,7 +29,6 @@ require (
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runc v1.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/rs/xid v1.6.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
 )

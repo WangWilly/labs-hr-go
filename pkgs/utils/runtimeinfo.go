@@ -94,6 +94,11 @@ func GetLogger() *zerolog.Logger {
 }
 
 func GetDetailedLogger() *zerolog.Logger {
+	// if calling this function for the test, initialize the logger
+	if logger == nil {
+		InitLogging(context.Background())
+	}
+
 	if detailedLogger == nil {
 		panic("logger not initialized")
 	}

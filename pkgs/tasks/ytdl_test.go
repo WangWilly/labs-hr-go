@@ -7,10 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/WangWilly/labs-hr-go/pkgs/utils"
 	"github.com/WangWilly/labs-hr-go/pkgs/uuid"
 	. "github.com/smartystreets/goconvey/convey"
-	gomock "go.uber.org/mock/gomock"
+	"go.uber.org/mock/gomock"
 )
+
+////////////////////////////////////////////////////////////////////////////////
 
 // MockCmd is a mock implementation of exec.Cmd for testing
 type MockCmd struct {
@@ -24,6 +27,16 @@ func (m *MockCmd) Run() error {
 	}
 	return &exec.ExitError{ProcessState: &os.ProcessState{}}
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+func TestMain(m *testing.M) {
+	utils.InitLogging(context.Background())
+	exitCode := m.Run()
+	os.Exit(exitCode)
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 func TestDownloadTaskConstructors(t *testing.T) {
 	Convey("Given task creation parameters", t, func() {
