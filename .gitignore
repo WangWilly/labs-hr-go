@@ -4,3 +4,5 @@ dist/
 **/public/downloads/
 **/storage/
 bin/
+
+coverage.out

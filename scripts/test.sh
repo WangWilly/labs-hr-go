@@ -25,4 +25,4 @@ done < <(go list ./...)
 #   echo " - $pkg"
 # done
 
-go test -cover -covermode=atomic "${test_list[@]}" || exit 1
+go test -cover -covermode=atomic "${test_list[@]}" -coverprofile="coverage.out" || exit 1
