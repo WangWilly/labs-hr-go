@@ -1,5 +1,9 @@
 # Labs-HR-Go
 
+[![Test CI](https://github.com/WangWilly/labs-hr-go/actions/workflows/test.yml/badge.svg)](https://github.com/WangWilly/labs-hr-go/actions/workflows/test.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/WangWilly/labs-hr-go)](https://goreportcard.com/report/github.com/WangWilly/labs-hr-go)
+
+
 ## Table of Contents
 - [Installation](#installation)
   - [Prerequisites](#prerequisites)
